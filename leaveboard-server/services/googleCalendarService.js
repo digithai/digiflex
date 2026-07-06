@@ -1,7 +1,5 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
-import fs from 'fs';
-import path from 'path';
 
 const toDateOnly = (value) => {
   if (!value) return null;
@@ -21,75 +19,56 @@ const addOneDay = (dateOnly) => {
   return parsed.toISOString().slice(0, 10);
 };
 
-// Get service account credentials
-const getServiceAccountAuth = () => {
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
-  
-  console.log('[Google Calendar] Loading service account credentials...');
-  console.log('[Google Calendar] Key path from env:', keyPath);
-  
-  if (!keyPath) {
-    console.log('[Google Calendar] Service account key path not configured');
-    return null;
-  }
-
-  const fullPath = path.resolve(keyPath);
-  console.log('[Google Calendar] Resolved full path:', fullPath);
-  
-  if (!fs.existsSync(fullPath)) {
-    console.log('[Google Calendar] Service account key file not found:', fullPath);
+const parseServiceAccountCredentials = (googleCalendarConfig) => {
+  const raw = String(googleCalendarConfig?.serviceAccountCredentialsFile || '').trim();
+  if (!raw) {
     return null;
   }
 
   try {
-    const keyFile = fs.readFileSync(fullPath, 'utf8');
-    const key = JSON.parse(keyFile);
-
-    console.log('[Google Calendar] Service account email:', key.client_email);
-    console.log('[Google Calendar] Project ID:', key.project_id);
-
-    const impersonateUser = process.env.GOOGLE_CALENDAR_IMPERSONATE_USER;
-    if (impersonateUser) {
-      console.log('[Google Calendar] Using domain-wide delegation as:', impersonateUser);
-    }
-
-    const auth = new JWT({
-      email: key.client_email,
-      key: key.private_key,
-      scopes: ['https://www.googleapis.com/auth/calendar'],
-      subject: impersonateUser || undefined,
-    });
-
-    console.log('[Google Calendar] Service account auth created successfully');
-    return auth;
+    return JSON.parse(raw);
   } catch (error) {
-    console.error('[Google Calendar] Error loading service account key:', error);
+    console.error('[Google Calendar] Invalid service account credentials JSON:', error.message);
     return null;
   }
 };
 
-// Get calendar ID from environment
-const getCalendarId = () => {
-  const calendarId = process.env.GOOGLE_CALENDAR_CALENDAR_ID;
-  console.log('[Google Calendar] Calendar ID from env:', calendarId);
-  
+const getServiceAccountAuth = (googleCalendarConfig) => {
+  const key = parseServiceAccountCredentials(googleCalendarConfig);
+  if (!key || !key.client_email || !key.private_key) {
+    console.log('[Google Calendar] Service account credentials are missing required fields');
+    return null;
+  }
+
+  const impersonateUser = String(googleCalendarConfig?.calendarUser || '').trim() || process.env.GOOGLE_CALENDAR_IMPERSONATE_USER;
+
+  return new JWT({
+    email: key.client_email,
+    key: key.private_key,
+    scopes: ['https://www.googleapis.com/auth/calendar'],
+    subject: impersonateUser || undefined,
+  });
+};
+
+const getCalendarId = (googleCalendarConfig) => {
+  const calendarId = String(googleCalendarConfig?.calendarId || '').trim();
   if (!calendarId) {
-    console.log('[Google Calendar] Calendar ID not configured, skipping sync');
+    console.log('[Google Calendar] Calendar ID is not configured for tenant');
     return null;
   }
   return calendarId;
 };
 
 // Create calendar event for WFH request
-export const createCalendarEvent = async (request, user, approver = null) => {
+export const createCalendarEvent = async (request, user, googleCalendarConfig, approver = null) => {
   try {
-    const auth = getServiceAccountAuth();
+    const auth = getServiceAccountAuth(googleCalendarConfig);
     if (!auth) {
       console.log('[Google Calendar] Service account not configured, skipping sync');
       return null;
     }
 
-    const calendarId = getCalendarId();
+    const calendarId = getCalendarId(googleCalendarConfig);
     if (!calendarId) {
       return null;
     }
@@ -132,9 +111,9 @@ export const createCalendarEvent = async (request, user, approver = null) => {
 };
 
 // Delete calendar event for WFH request
-export const deleteCalendarEvent = async (request) => {
+export const deleteCalendarEvent = async (request, googleCalendarConfig) => {
   try {
-    const auth = getServiceAccountAuth();
+    const auth = getServiceAccountAuth(googleCalendarConfig);
     if (!auth) {
       console.log('[Google Calendar] Service account not configured, skipping sync');
       return null;
@@ -145,7 +124,7 @@ export const deleteCalendarEvent = async (request) => {
       return null;
     }
 
-    const calendarId = getCalendarId();
+    const calendarId = getCalendarId(googleCalendarConfig);
     if (!calendarId) {
       return null;
     }
@@ -168,9 +147,9 @@ export const deleteCalendarEvent = async (request) => {
 };
 
 // Update calendar event (for date changes)
-export const updateCalendarEvent = async (request, user) => {
+export const updateCalendarEvent = async (request, user, googleCalendarConfig) => {
   try {
-    const auth = getServiceAccountAuth();
+    const auth = getServiceAccountAuth(googleCalendarConfig);
     if (!auth) {
       console.log('[Google Calendar] Service account not configured, skipping sync');
       return null;
@@ -178,10 +157,10 @@ export const updateCalendarEvent = async (request, user) => {
 
     if (!request.googleCalendarEventId) {
       console.log('[Google Calendar] No Google Calendar event ID found, creating new event');
-      return createCalendarEvent(request, user);
+      return createCalendarEvent(request, user, googleCalendarConfig);
     }
 
-    const calendarId = getCalendarId();
+    const calendarId = getCalendarId(googleCalendarConfig);
     if (!calendarId) {
       return null;
     }

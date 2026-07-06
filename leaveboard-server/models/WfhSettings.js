@@ -18,6 +18,26 @@ const wfhSettingsSchema = new mongoose.Schema({
     of: Number,
     default: {},
   },
+  googleCalendar: {
+    enabled: {
+      type: Boolean,
+      default: false,
+    },
+    serviceAccountCredentialsFile: {
+      type: String,
+      default: '',
+    },
+    calendarId: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    calendarUser: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+  },
 }, {
   timestamps: true,
 });

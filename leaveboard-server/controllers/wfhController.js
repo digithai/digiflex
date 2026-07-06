@@ -42,6 +42,13 @@ const getOrCreateSettings = async (tenantId) => {
   return doc;
 };
 
+const getGoogleCalendarConfig = (settings) => ({
+  enabled: !!settings?.googleCalendar?.enabled,
+  serviceAccountCredentialsFile: String(settings?.googleCalendar?.serviceAccountCredentialsFile || '').trim(),
+  calendarId: String(settings?.googleCalendar?.calendarId || '').trim(),
+  calendarUser: String(settings?.googleCalendar?.calendarUser || '').trim(),
+});
+
 export const requestWfh = async (req, res) => {
   try {
     const { type, date, userId, allowAnyDate, status } = req.body;
@@ -59,6 +66,7 @@ export const requestWfh = async (req, res) => {
 
     const selectedDate = parseISO(date);
     const settings = await getOrCreateSettings(tenantId);
+    const googleCalendarConfig = getGoogleCalendarConfig(settings);
     const today = new Date();
     const intervals = [];
     const scopes = settings.allowedDateScopes || {};
@@ -198,9 +206,9 @@ export const requestWfh = async (req, res) => {
     }
 
     // Sync to Google Calendar if approved
-    if (newRequest.status === 'approved' && newRequest.type === 'wfh') {
+    if (newRequest.status === 'approved' && newRequest.type === 'wfh' && googleCalendarConfig.enabled) {
       try {
-        const calendarEvent = await createCalendarEvent(newRequest, user, actor);
+        const calendarEvent = await createCalendarEvent(newRequest, user, googleCalendarConfig, actor);
         if (calendarEvent) {
           newRequest.googleCalendarEventId = calendarEvent.id;
           await newRequest.save();
@@ -259,6 +267,9 @@ export const getRejectedRequests = async (req, res) => {
 
 export const approveRequest = async (req, res) => {
   try {
+    const settings = await getOrCreateSettings(req.user.tenant._id);
+    const googleCalendarConfig = getGoogleCalendarConfig(settings);
+
     const request = await WfhRequest.findOne({
       _id: req.params.id,
       ...getTenantQuery(req),
@@ -272,9 +283,9 @@ export const approveRequest = async (req, res) => {
     await request.save();
 
     // Sync to Google Calendar for WFH requests
-    if (request.type === 'wfh') {
+    if (request.type === 'wfh' && googleCalendarConfig.enabled) {
       try {
-        const calendarEvent = await createCalendarEvent(request, request.user, req.user);
+        const calendarEvent = await createCalendarEvent(request, request.user, googleCalendarConfig, req.user);
         if (calendarEvent) {
           request.googleCalendarEventId = calendarEvent.id;
           await request.save();
@@ -353,6 +364,9 @@ Thank you for your understanding.`,
 
 export const deleteRequest = async (req, res) => {
   try {
+    const settings = await getOrCreateSettings(req.user.tenant._id);
+    const googleCalendarConfig = getGoogleCalendarConfig(settings);
+
     const request = await WfhRequest.findOne({
       _id: req.params.id,
       ...getTenantQuery(req),
@@ -362,7 +376,7 @@ export const deleteRequest = async (req, res) => {
     // Delete from Google Calendar if synced
     if (request.type === 'wfh' && request.googleCalendarEventId) {
       try {
-        await deleteCalendarEvent(request);
+        await deleteCalendarEvent(request, googleCalendarConfig);
       } catch (calendarError) {
         console.error('[WFH] Failed to delete from Google Calendar:', calendarError);
         // Don't fail the deletion if calendar sync fails

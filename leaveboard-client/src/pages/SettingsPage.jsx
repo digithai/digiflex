@@ -14,6 +14,7 @@ const SettingsPage = () => {
   // WFH rules settings state
   const [wfhSettings, setWfhSettings] = useState(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [calendarSettingsLoading, setCalendarSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const isTenantAdmin = ['tenant_admin'].includes(user?.role);
   const canManageSettings = isTenantAdmin;
@@ -41,6 +42,32 @@ const SettingsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleCalendarToggle = () => {
+    setWfhSettings((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        googleCalendar: {
+          ...(prev.googleCalendar || {}),
+          enabled: !prev.googleCalendar?.enabled,
+        },
+      };
+    });
+  };
+
+  const handleGoogleCalendarFieldChange = (key, value) => {
+    setWfhSettings((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        googleCalendar: {
+          ...(prev.googleCalendar || {}),
+          [key]: value,
+        },
+      };
+    });
   };
 
   const fetchWfhSettings = async () => {
@@ -147,6 +174,35 @@ const SettingsPage = () => {
       setSettingsError(msg);
     } finally {
       setSettingsLoading(false);
+    }
+  };
+
+  const handleSaveGoogleCalendarSettings = async (e) => {
+    e.preventDefault();
+    if (!wfhSettings) return;
+
+    try {
+      setCalendarSettingsLoading(true);
+      setSettingsError('');
+
+      const payload = {
+        googleCalendar: {
+          enabled: !!wfhSettings.googleCalendar?.enabled,
+          serviceAccountCredentialsFile: wfhSettings.googleCalendar?.serviceAccountCredentialsFile || '',
+          calendarId: wfhSettings.googleCalendar?.calendarId || '',
+          calendarUser: wfhSettings.googleCalendar?.calendarUser || '',
+        },
+      };
+
+      await axios.put(wfhSettingsUrl, payload, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+    } catch (err) {
+      console.error('Error saving Google Calendar settings:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save Google Calendar settings';
+      setSettingsError(msg);
+    } finally {
+      setCalendarSettingsLoading(false);
     }
   };
 
@@ -433,6 +489,94 @@ const SettingsPage = () => {
               + Add Public Holiday
             </button>
           </>
+        )}
+
+        {/* Google Calendar Settings (Admin only) */}
+        {isTenantAdmin && (
+          <section style={{ width: '100%', marginBottom: 32 }}>
+            <h2>Google Calendar Sync</h2>
+            {settingsError && <p style={{ color: 'red' }}>{settingsError}</p>}
+            {!settingsLoading && wfhSettings && (
+              <form onSubmit={handleSaveGoogleCalendarSettings} style={{ marginBottom: 24 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!wfhSettings.googleCalendar?.enabled}
+                      onChange={handleGoogleCalendarToggle}
+                      style={{ accentColor: 'var(--green)' }}
+                    />
+                    Enable Google Calendar sync
+                  </label>
+
+                  {wfhSettings.googleCalendar?.enabled && (
+                    <>
+                      <div style={{ marginBottom: 12 }}>
+                        <label htmlFor="service-account-credentials-file" style={{ display: 'block', marginBottom: 6 }}>
+                          Service account credentials file
+                        </label>
+                        <textarea
+                          id="service-account-credentials-file"
+                          value={wfhSettings.googleCalendar?.serviceAccountCredentialsFile || ''}
+                          onChange={(e) => handleGoogleCalendarFieldChange('serviceAccountCredentialsFile', e.target.value)}
+                          rows={8}
+                          placeholder="Paste the JSON credentials content from your Google service account file"
+                          style={{ width: '100%', fontFamily: 'monospace', fontSize: 12 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="google-calendar-id" style={{ display: 'block', marginBottom: 6 }}>
+                          Calendar ID
+                        </label>
+                        <input
+                          id="google-calendar-id"
+                          type="text"
+                          value={wfhSettings.googleCalendar?.calendarId || ''}
+                          onChange={(e) => handleGoogleCalendarFieldChange('calendarId', e.target.value)}
+                          placeholder="example@group.calendar.google.com"
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+
+                      <div style={{ marginTop: 12 }}>
+                        <label htmlFor="google-calendar-user" style={{ display: 'block', marginBottom: 6 }}>
+                          Calendar user
+                        </label>
+                        <input
+                          id="google-calendar-user"
+                          type="text"
+                          value={wfhSettings.googleCalendar?.calendarUser || ''}
+                          onChange={(e) => handleGoogleCalendarFieldChange('calendarUser', e.target.value)}
+                          placeholder="user@example.com"
+                          style={{ width: '100%' }}
+                        />
+                        <p style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
+                          The account used to create the event. It needs to be a real Google Workspace user or have event editing permissions on the calendar.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  style={{
+                    marginTop: 8,
+                    padding: '8px 12px',
+                    borderRadius: 4,
+                    border: 'none',
+                    backgroundColor: 'var(--green)',
+                    color: 'white',
+                    cursor: 'pointer',
+                  }}
+                  disabled={calendarSettingsLoading}
+                >
+                  {calendarSettingsLoading ? 'Saving Google Calendar settings...' : 'Save Google Calendar settings'}
+                </button>
+              </form>
+            )}
+          </section>
         )}
 
         {isModalOpen && (
