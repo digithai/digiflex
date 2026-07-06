@@ -1,14 +1,14 @@
 services:
   mongo:
     image: mongo:7
-    container_name: mongo
+    container_name: digiflex-mongo
     restart: unless-stopped
     volumes:
       - mongo_data:/data/db
 
   server:
     build: ./leaveboard-server
-    container_name: leaveboard-server
+    container_name: digiflex-server
     restart: unless-stopped
     env_file: ./.env
     environment:
@@ -25,7 +25,7 @@ services:
       context: ./leaveboard-client
       args:
         VITE_BASE_URL: ${VITE_BASE_URL:-http://localhost:7088}
-    container_name: leaveboard-client
+    container_name: digiflex-client
     restart: unless-stopped
     depends_on: [server]
     ports: ["7091:7091"]
