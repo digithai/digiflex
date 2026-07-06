@@ -14,7 +14,7 @@ services:
     environment:
       NODE_ENV: development
     depends_on: [mongo]
-    ports: ["${PORT:-7088}:${PORT:-7088}"]
+    ports: ["${PORT:-7077}:${PORT:-7077}"]
     volumes:
       - ./leaveboard-server:/app
       - /app/node_modules
@@ -24,17 +24,17 @@ services:
     build:
       context: ./leaveboard-client
       args:
-        VITE_BASE_URL: ${VITE_BASE_URL:-http://localhost:7088}
+        VITE_BASE_URL: ${VITE_BASE_URL:-http://localhost:7077}
     container_name: leaveboard-client
     restart: unless-stopped
     depends_on: [server]
-    ports: ["7091:7091"]
+    ports: ["7081:7081"]
     environment:
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./leaveboard-client:/app
       - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0 --port 7091
+    command: npm run dev -- --host 0.0.0.0 --port 7081
 
 volumes:
   mongo_data:
