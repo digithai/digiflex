@@ -1,0 +1,14 @@
+:root {
+  --blue: #1f3c88;
+  --green: #1ea713;
+  --red: #dc2626;
+  --white: #ffffff;
+  --black: #0f172a;
+  --grey-light: #f8fafc;
+  --grey-dark: #dbe3ee;
+  --dark-grey-text: #334155;
+  --yellow: #f59e0b;
+
+  --button-radius: 12px;
+  --radius: 18px;
+}

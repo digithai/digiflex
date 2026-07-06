@@ -1,58 +1,40 @@
-version: "3.9"
-
 services:
   mongo:
     image: mongo:7
     container_name: mongo
     restart: unless-stopped
-    networks:
-      - leaveboard-network
     volumes:
       - mongo_data:/data/db
 
   server:
-    build:
-      context: ./leaveboard-server
-      dockerfile: Dockerfile
+    build: ./leaveboard-server
     container_name: leaveboard-server
     restart: unless-stopped
-    env_file:
-      - ./.env
+    env_file: ./.env
     environment:
-      # These are read from env_file; overrides can be placed here if needed
-      NODE_ENV: ${NODE_ENV}
-      PORT: ${PORT}
-      MONGO_URI: ${MONGO_URI}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      EMAIL_USER: ${EMAIL_USER}
-      EMAIL_PASS: ${EMAIL_PASS}
-    depends_on:
-      - mongo
-    ports:
-      - "${PORT:-7088}:${PORT:-7088}"
-    networks:
-      - leaveboard-network
+      NODE_ENV: development
+    depends_on: [mongo]
+    ports: ["${PORT:-7088}:${PORT:-7088}"]
+    volumes:
+      - ./leaveboard-server:/app
+      - /app/node_modules
+    command: node --watch index.js
 
   client:
     build:
       context: ./leaveboard-client
-      dockerfile: Dockerfile
       args:
-        # Embedded at build time for the SPA to reach the API from the browser
         VITE_BASE_URL: ${VITE_BASE_URL:-http://localhost:7088}
     container_name: leaveboard-client
     restart: unless-stopped
-    depends_on:
-      - server
-    ports:
-      - "7091:7091"
-    networks:
-      - leaveboard-network
+    depends_on: [server]
+    ports: ["7091:7091"]
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./leaveboard-client:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 7091
 
 volumes:
   mongo_data:
-
-networks:
-  leaveboard-network:
-    driver: bridge

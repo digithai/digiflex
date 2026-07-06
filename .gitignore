@@ -1,8 +1,10 @@
 # Env
 .env
 
+# Google Calendar Service Account Key
+digiflex-calendar-*.json
+
 # Misc
 .DS_Store
 docker-deploy.zip
-leaveboard-client
-leaveboard-server
+.idea/

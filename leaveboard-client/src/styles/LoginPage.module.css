@@ -1,0 +1,137 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100vw;
+  padding: 16px;
+  box-sizing: border-box;
+  background: linear-gradient(140deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.logo {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 24px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  max-width: 100%;
+  padding: 28px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-medium);
+}
+
+.form * {
+  margin: 0.75em 0;
+  padding: 0 1em;
+  height: 42px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 1em 0;
+}
+
+.field span {
+  margin: 0;
+  padding: 0;
+  height: auto;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.field input {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--button-radius);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(31, 60, 136, 0.1);
+}
+
+.button {
+  background-color: var(--green);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  padding: 12px 20px;
+}
+
+.button:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  background-color: var(--white);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  padding: 12px 20px;
+}
+
+.secondaryButton:hover {
+  background-color: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.link {
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: var(--red);
+  min-height: 20px;
+  font-size: 13px;
+}
+
+.status {
+  color: var(--green);
+  min-height: 20px;
+  font-size: 13px;
+}

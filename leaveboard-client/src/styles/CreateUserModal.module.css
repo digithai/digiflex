@@ -1,0 +1,88 @@
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background: #fff;
+  padding: 28px;
+  width: 420px;
+  max-width: 90%;
+  margin: 2em 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-medium);
+  z-index: 1000;
+}
+
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: var(--blue);
+  letter-spacing: 0.02em;
+}
+
+.modal form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal input,
+.modal select {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--button-radius);
+  color: var(--text-primary);
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.modal input:focus,
+.modal select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(31, 60, 136, 0.1);
+}
+
+.modal button {
+  margin-top: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--button-radius);
+  transition: all 0.2s ease;
+}
+
+.create {
+  background-color: var(--green);
+  color: var(--white);
+}
+
+.create:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.cancel {
+  background-color: var(--red);
+  color: var(--white);
+}
+
+.cancel:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}

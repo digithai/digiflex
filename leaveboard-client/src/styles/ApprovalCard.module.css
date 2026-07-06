@@ -1,0 +1,70 @@
+.card {
+  display: grid;
+  grid-template-columns: 240px auto;
+  align-items: center;
+  column-gap: 24px;
+  border: 1px solid var(--surface-border);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  list-style: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.card p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.card .name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--blue);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.card button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--button-radius);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.card button:hover {
+  transform: translateY(-1px);
+}
+
+.approve {
+  background-color: var(--green);
+  color: var(--white);
+}
+
+.approve:hover {
+  background-color: #15803d;
+}
+
+.reject {
+  background-color: var(--red);
+  color: var(--white);
+}
+
+.reject:hover {
+  background-color: #b91c1c;
+}

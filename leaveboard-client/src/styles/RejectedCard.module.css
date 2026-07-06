@@ -1,0 +1,43 @@
+.rejectedCard {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 240px auto;
+  align-items: center;
+  column-gap: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  transition: all 0.2s ease;
+}
+
+.rejectedCard:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.rejectedCard strong {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.rejectedCard > div:first-child > div {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.rejectionReason {
+  font-size: 13px;
+  color: var(--red);
+  background: #fef2f2;
+  padding: 8px 12px;
+  border-radius: var(--button-radius);
+  border: 1px solid #fecaca;
+}
+
+.rejectionReason strong {
+  color: var(--red);
+  font-size: 13px;
+}

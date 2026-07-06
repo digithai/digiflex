@@ -1,0 +1,79 @@
+.wfhRequestForm {
+  display: flex;
+  flex-direction: column;
+  align-items: normal;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.wfhRequestForm * {
+  margin-bottom: 16px;
+}
+
+.wfhRequestForm h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+}
+
+.wfhRequestForm label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.wfhRequestForm input[type="date"],
+.wfhRequestForm select {
+  padding: 12px 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--button-radius);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.wfhRequestForm input[type="date"]:focus,
+.wfhRequestForm select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(31, 60, 136, 0.1);
+}
+
+.wfhRequestForm button[type="submit"] {
+  padding: 12px 20px;
+  background-color: var(--green);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.wfhRequestForm button[type="submit"]:hover:not(:disabled) {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.wfhRequestForm button[type="submit"]:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.wfhRequestForm p {
+  color: var(--text-secondary);
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}

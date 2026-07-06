@@ -1,0 +1,24 @@
+.approval {
+    display: flex;
+    flex-direction: column;
+    align-items: normal;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+    margin: 1em 0;
+    border-radius: var(--radius);
+}
+
+.request {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: center;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    box-shadow: var(--shadow-soft);
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--radius);
+}

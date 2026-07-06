@@ -1,0 +1,82 @@
+.deleteButton {
+  background-color: var(--red);
+  color: var(--white);
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--button-radius);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.updatePassword {
+  background-color: var(--blue);
+  color: var(--white);
+  border: none;
+  padding: 8px 14px;
+  margin: 8px;
+  border-radius: var(--button-radius);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.updatePassword:hover {
+  background-color: #1e3a8a;
+  transform: translateY(-1px);
+}
+
+.TableContainer {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.TableContainer table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.TableContainer th,
+.TableContainer td {
+  padding: 12px 8px;
+  border: 1px solid var(--surface-border);
+  text-align: left;
+}
+
+.TableContainer th {
+  background: var(--blue);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+}
+
+.TableContainer td {
+  background: #fff;
+  color: var(--text-secondary);
+}
+
+.TableContainer tr:nth-child(even) td {
+  background: var(--grey-light);
+}
+
+.TableContainer tr:hover td {
+  background: #e0f2fe;
+}
