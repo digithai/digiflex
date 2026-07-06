@@ -9,9 +9,11 @@ const getOrCreateSettings = async (req) => {
   return doc;
 };
 
-const toSettingsResponse = (settingsDoc, canViewSecrets) => {
+const toSettingsResponse = (settingsDoc) => {
   const data = settingsDoc.toObject({ flattenMaps: true });
-  if (!canViewSecrets && data.googleCalendar) {
+  if (data.googleCalendar) {
+    const hasServiceAccountCredentials = !!String(data.googleCalendar.serviceAccountCredentialsFile || '').trim();
+    data.googleCalendar.hasServiceAccountCredentials = hasServiceAccountCredentials;
     data.googleCalendar.serviceAccountCredentialsFile = '';
   }
   return data;
@@ -20,8 +22,7 @@ const toSettingsResponse = (settingsDoc, canViewSecrets) => {
 export const getWfhSettings = async (req, res) => {
   try {
     const settings = await getOrCreateSettings(req);
-    const canViewSecrets = isTenantAdminRole(req.user?.role) || isSuperAdminRole(req.user?.role);
-    res.json(toSettingsResponse(settings, canViewSecrets));
+    res.json(toSettingsResponse(settings));
   } catch (err) {
     console.error('[SETTINGS] Error fetching WFH settings:', err);
     res.status(500).json({ message: 'Failed to fetch WFH settings' });
@@ -87,7 +88,7 @@ export const updateWfhSettings = async (req, res) => {
 
       if (nextEnabled && (!nextCredentials || !nextCalendarId)) {
         return res.status(400).json({
-          message: 'Service account credentials file and calendar ID are required when Google Calendar sync is enabled',
+          message: 'Service account credentials and calendar ID are required when Google Calendar sync is enabled',
         });
       }
 
@@ -107,8 +108,7 @@ export const updateWfhSettings = async (req, res) => {
     }
 
     await settings.save();
-    const canViewSecrets = isTenantAdminRole(req.user?.role) || isSuperAdminRole(req.user?.role);
-    res.json(toSettingsResponse(settings, canViewSecrets));
+    res.json(toSettingsResponse(settings));
   } catch (err) {
     console.error('[SETTINGS] Error updating WFH settings:', err);
     res.status(500).json({ message: 'Failed to update WFH settings' });

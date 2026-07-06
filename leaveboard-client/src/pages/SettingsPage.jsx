@@ -15,6 +15,7 @@ const SettingsPage = () => {
   const [wfhSettings, setWfhSettings] = useState(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [calendarSettingsLoading, setCalendarSettingsLoading] = useState(false);
+  const [calendarCredentialsDirty, setCalendarCredentialsDirty] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const isTenantAdmin = ['tenant_admin'].includes(user?.role);
   const canManageSettings = isTenantAdmin;
@@ -26,6 +27,36 @@ const SettingsPage = () => {
 
   const baseUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const wfhSettingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
+
+  const maskPrivateKeyInCredentials = (rawCredentials) => {
+    const raw = String(rawCredentials || '').trim();
+    if (!raw) return '';
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.private_key) {
+        return JSON.stringify({ ...parsed, private_key: '**********' }, null, 2);
+      }
+    } catch {
+      // Keep raw value if it is not valid JSON
+    }
+
+    return raw;
+  };
+
+  const sanitizeSettingsForUi = (settingsData) => {
+    if (!settingsData) return null;
+    const next = { ...settingsData };
+
+    if (next.googleCalendar) {
+      next.googleCalendar = {
+        ...next.googleCalendar,
+        serviceAccountCredentialsFile: maskPrivateKeyInCredentials(next.googleCalendar.serviceAccountCredentialsFile),
+      };
+    }
+
+    return next;
+  };
 
   const fetchHolidays = async () => {
     try {
@@ -58,6 +89,10 @@ const SettingsPage = () => {
   };
 
   const handleGoogleCalendarFieldChange = (key, value) => {
+    if (key === 'serviceAccountCredentialsFile') {
+      setCalendarCredentialsDirty(true);
+    }
+
     setWfhSettings((prev) => {
       if (!prev) return prev;
       return {
@@ -77,7 +112,8 @@ const SettingsPage = () => {
       const res = await axios.get(wfhSettingsUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setWfhSettings(res.data || null);
+      setWfhSettings(sanitizeSettingsForUi(res.data || null));
+      setCalendarCredentialsDirty(false);
     } catch (err) {
       console.error('Error fetching WFH settings:', err);
       const msg = err?.response?.data?.message || err?.message || 'Failed to load WFH settings';
@@ -188,15 +224,21 @@ const SettingsPage = () => {
       const payload = {
         googleCalendar: {
           enabled: !!wfhSettings.googleCalendar?.enabled,
-          serviceAccountCredentialsFile: wfhSettings.googleCalendar?.serviceAccountCredentialsFile || '',
           calendarId: wfhSettings.googleCalendar?.calendarId || '',
           calendarUser: wfhSettings.googleCalendar?.calendarUser || '',
         },
       };
 
-      await axios.put(wfhSettingsUrl, payload, {
+      const nextCredentials = String(wfhSettings.googleCalendar?.serviceAccountCredentialsFile || '').trim();
+      if (calendarCredentialsDirty && nextCredentials) {
+        payload.googleCalendar.serviceAccountCredentialsFile = nextCredentials;
+      }
+
+      const res = await axios.put(wfhSettingsUrl, payload, {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
+      setWfhSettings(sanitizeSettingsForUi(res.data || null));
+      setCalendarCredentialsDirty(false);
     } catch (err) {
       console.error('Error saving Google Calendar settings:', err);
       const msg = err?.response?.data?.message || err?.message || 'Failed to save Google Calendar settings';
@@ -513,8 +555,13 @@ const SettingsPage = () => {
                     <>
                       <div style={{ marginBottom: 12 }}>
                         <label htmlFor="service-account-credentials-file" style={{ display: 'block', marginBottom: 6 }}>
-                          Service account credentials file
+                          Service account credentials 
                         </label>
+                        {wfhSettings.googleCalendar?.hasServiceAccountCredentials && (
+                          <p style={{ fontSize: 12, color: '#555', marginBottom: 6 }}>
+                            Credentials are already saved. Paste new credentials only if you want to replace them.
+                          </p>
+                        )}
                         <textarea
                           id="service-account-credentials-file"
                           value={wfhSettings.googleCalendar?.serviceAccountCredentialsFile || ''}
