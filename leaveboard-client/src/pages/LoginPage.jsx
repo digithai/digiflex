@@ -33,6 +33,7 @@ const LoginPage = () => {
     } catch (err) {
       const message = err.response?.data?.message;
       dispatch(loginFailure(message || 'Invalid credentials.'));
+      setPassword('');
     }
   };
 

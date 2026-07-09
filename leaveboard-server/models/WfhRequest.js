@@ -8,6 +8,7 @@ const wfhRequestSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   motivation: { type: String },
   rejectionReason: { type: String }, // Store rejection reason
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // User who approved or rejected the request
   googleCalendarEventId: { type: String }, // Store Google Calendar event ID for sync
   createdAt: { type: Date, default: Date.now }
 });

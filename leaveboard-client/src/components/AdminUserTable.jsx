@@ -73,6 +73,7 @@ const AdminUserTable = ({ users, refreshUsers }) => {
           <tr>
             <th>Name</th>
             <th>Email</th>
+            <th>Position</th>
             <th>Role</th>
             <th>Actions</th>
           </tr>
@@ -82,6 +83,7 @@ const AdminUserTable = ({ users, refreshUsers }) => {
             <tr key={u._id}>
               <td>{u.name}</td>
               <td>{u.email}</td>
+              <td>{u.position || '-'}</td>
               <td>{getRoleLabel(u.role)}</td>
               <td>
                  <button

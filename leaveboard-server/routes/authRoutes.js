@@ -13,13 +13,13 @@ const router = express.Router();
 
 // Rate limiters
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // limit each IP to 5 failed requests per windowMs
   message: { message: 'Too many authentication attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false, // Count all requests, including failed ones
-  skipFailedRequests: false,
+  skipSuccessfulRequests: true, // Don't count successful logins toward the limit
+  skipFailedRequests: false, // Count failed requests
   keyGenerator: (req) => {
     return req.ip || req.connection.remoteAddress;
   },
