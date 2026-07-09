@@ -15,7 +15,7 @@ h2 {
   letter-spacing: 0.02em;
 }
 
-table {
+.container table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -23,13 +23,14 @@ table {
   font-size: 11px;
 }
 
-th, td {
-  padding: 0 6px 0 6px;
+.container th,
+.container td {
+  padding: 10px 6px;
   border: 1px solid var(--surface-border);
   min-width: 60px;
 }
 
-th {
+.container th {
   background: linear-gradient(135deg, var(--blue) 0%, #1e40af 100%);
   color: var(--white);
   font-weight: 600;
@@ -42,7 +43,7 @@ th {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-th:first-child {
+.container th:first-child {
   position: sticky;
   left: 0;
   z-index: 20;
@@ -50,13 +51,13 @@ th:first-child {
   background: linear-gradient(135deg, var(--blue) 0%, #1e40af 100%);
 }
 
-td {
+.container td {
   background: #fff;
   color: var(--text-secondary);
   transition: background-color 0.2s ease;
 }
 
-td:first-child {
+.container td:first-child {
   position: sticky;
   left: 0;
   z-index: 5;
@@ -68,11 +69,11 @@ td:first-child {
   font-size: 13px;
 }
 
-tr:nth-child(even) td:not(:first-child) {
+.container tr:nth-child(even) td:not(:first-child) {
   background: #f8fafc;
 }
 
-tr:hover td:not(:first-child) {
+.container tr:hover td:not(:first-child) {
   background: #e0f2fe;
 }
 
@@ -176,13 +177,15 @@ tr:hover td:not(:first-child) {
     padding: 16px;
   }
 
-  th, td {
+  .container th,
+  .container td {
     padding: 8px 4px;
     font-size: 11px;
     min-width: 50px;
   }
 
-  th:first-child, td:first-child {
+  .container th:first-child,
+  .container td:first-child {
     min-width: 100px;
   }
 
