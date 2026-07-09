@@ -30,7 +30,7 @@ function App() {
           <Route path="/approvals" element={<Approvals />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={['tenant_admin', 'approver']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['tenant_admin']} />}>
           <Route path="/holidays" element={<Holidays />} />
         </Route>
 

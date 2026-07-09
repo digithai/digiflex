@@ -7,8 +7,12 @@ import { validatePassword } from '../utils/validation.js';
 
 const router = express.Router();
 
-// Get all users (admin only)
-router.get('/users', protect, tenantAdminOnly, async (req, res) => {
+// Get all users (admin and approver)
+router.get('/users', protect, async (req, res) => {
+  const allowedRoles = ['tenant_admin', 'approver'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: 'Only tenant admins and approvers can access this endpoint' });
+  }
   const users = await User.find({ tenant: req.user.tenant._id }).select('-password');
   res.json(users);
 });

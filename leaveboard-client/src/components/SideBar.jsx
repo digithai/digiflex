@@ -68,8 +68,7 @@ const SideBar = () => {
         {isApprover && (
           <ul className={styles.sidebarList}>
             <li><Link to="/" onClick={closeSidebar} className={`${styles.link} ${location.pathname === '/' ? styles.active : ''}`}>Dashboard</Link></li>
-            <li><Link to="/approvals" onClick={closeSidebar} className={`${styles.link} ${onPendingSection ? styles.active : ''}`}>Pending Requests</Link></li>
-            <li><Link to="/approvals#history" onClick={closeSidebar} className={`${styles.link} ${onHistorySection ? styles.active : ''}`}>Approvals History</Link></li>
+            <li><Link to="/approvals" onClick={closeSidebar} className={`${styles.link} ${location.pathname === '/approvals' ? styles.active : ''}`}>Approvals</Link></li>
             <li><a className={styles.logout} onClick={handleLogout} >Logout</a></li>
           </ul>
         )}
