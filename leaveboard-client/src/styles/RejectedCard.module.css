@@ -35,6 +35,8 @@
   padding: 8px 12px;
   border-radius: var(--button-radius);
   border: 1px solid #fecaca;
+  max-width: 400px;
+  word-wrap: break-word;
 }
 
 .rejectionReason strong {
