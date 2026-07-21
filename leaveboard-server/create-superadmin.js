@@ -7,7 +7,7 @@ import { validateEmail, validatePassword } from "./utils/validation.js";
 dotenv.config();
 
 // ====== MongoDB Connection ======
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/leaveboard";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/digiflex";
 
 await mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,

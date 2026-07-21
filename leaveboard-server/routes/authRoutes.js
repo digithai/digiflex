@@ -123,7 +123,7 @@ router.post('/register', protect, tenantAdminOnly, async (req, res) => {
   setImmediate(() => {
     sendEmail({
       to: user.email,
-      subject: 'Welcome to LeaveBoard',
+      subject: 'Welcome to DigiFlex',
       text: `Hi ${user.name},\n\nYour account has been created successfully. You can now log in and start using the system.`,
     }).catch(err => {
       console.error('[AUTH] Failed to send welcome email:', err);

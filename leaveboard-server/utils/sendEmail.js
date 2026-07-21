@@ -27,7 +27,7 @@ const sendEmail = async ({ to, subject, text }) => {
   }
 
   await transporter.sendMail({
-    from: `"LeaveBoard" <${process.env.EMAIL_USER}>`,
+    from: `"DigiFlex" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text,

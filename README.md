@@ -87,7 +87,7 @@ docker compose down
 You can create a superadmin user using the provided interactive script:
 
 ```bash
-cd leaveboard-server
+cd digiflex-server
 npm run create-superadmin
 ```
 
@@ -110,7 +110,7 @@ This script migrates existing database users into the new multi-tenant structure
 4. Moves all related data (holidays, requests, settings) to Digithai
 
 ```bash
-cd leaveboard-server
+cd digiflex-server
 npm run migrate-to-digithai
 ```
 
@@ -120,11 +120,11 @@ To run the linters for code quality checks:
 
 ```bash
 # Server linting
-cd leaveboard-server
+cd digiflex-server
 npm run lint
 
 # Client linting
-cd leaveboard-client
+cd digiflex-client
 npm run lint
 ```
 
