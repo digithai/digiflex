@@ -5,7 +5,7 @@ import WfhSettings from '../models/WfhSettings.js';
 import nodemailer from 'nodemailer';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, addWeeks, parseISO } from 'date-fns';
 import { isSuperAdminRole, isTenantAdminRole } from '../middleware/authMiddleware.js';
-import { createCalendarEvent, deleteCalendarEvent } from '../services/googleCalendarService.js';
+import { createCalendarEvent, deleteCalendarEvent, updateCalendarEvent } from '../services/googleCalendarService.js';
 
 const getTransporter = () => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging') {
@@ -399,6 +399,9 @@ export const updateRequestDate = async (req, res) => {
     const { date } = req.body;
     if (!date) return res.status(400).json({ message: 'Date is required' });
 
+    const settings = await getOrCreateSettings(req.user.tenant._id);
+    const googleCalendarConfig = getGoogleCalendarConfig(settings);
+
     const request = await WfhRequest.findOne({
       _id: req.params.id,
       ...getTenantQuery(req),
@@ -408,6 +411,20 @@ export const updateRequestDate = async (req, res) => {
     const oldDate = request.date;
     request.date = date;
     await request.save();
+
+    // Sync to Google Calendar if enabled
+    if (request.type === 'wfh' && googleCalendarConfig.enabled) {
+      try {
+        const calendarEvent = await updateCalendarEvent(request, request.user, googleCalendarConfig);
+        if (calendarEvent) {
+          request.googleCalendarEventId = calendarEvent.id;
+          await request.save();
+        }
+      } catch (calendarError) {
+        console.error('[WFH] Failed to sync to Google Calendar:', calendarError);
+        // Don't fail the date update if calendar sync fails
+      }
+    }
 
     try {
       const transporter = getTransporter();
