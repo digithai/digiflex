@@ -36,14 +36,11 @@ router.delete('/users/:id', protect, tenantAdminOnly, async (req, res) => {
       return res.status(403).json({ message: 'You cannot delete a superadmin or tenant admin account' });
     }
 
-    // First, delete all WFH requests by this user
-    await WfhRequest.deleteMany({ tenant: req.user.tenant._id, user: userId });
-
-    // Then delete the user
+    // Delete the user (WFH requests are preserved)
     const user = await User.findOneAndDelete({ _id: userId, tenant: req.user.tenant._id });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json({ message: 'User and related WFH requests deleted' });
+    res.json({ message: 'User deleted successfully' });
   } catch (err) {
     console.error('Error deleting user:', err);
     res.status(500).json({ message: 'Server error' });

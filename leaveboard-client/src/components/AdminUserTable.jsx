@@ -92,7 +92,7 @@ const AdminUserTable = ({ users, refreshUsers }) => {
                  >
                    Edit
                  </button>
-                 {user._id !== u._id && (
+                 {user._id !== u._id && u.role !== 'tenant_admin' && (
                    <button
                      onClick={() => handleDelete(u._id)}
                      className={styles.deleteButton}
