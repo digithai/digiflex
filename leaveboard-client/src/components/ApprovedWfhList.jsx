@@ -154,7 +154,7 @@ const today = formatDateLocal(new Date());
                 >
                   <option value="">Select a user</option>
                   {allUsers
-                    .filter((u) => u._id !== user?._id)
+                    .filter((u) => user?.role === 'tenant_admin' ? true : u._id !== user?._id)
                     .map((u) => (
                       <option key={u._id} value={u._id}>
                         {u.name} ({getRoleLabel(u.role)})

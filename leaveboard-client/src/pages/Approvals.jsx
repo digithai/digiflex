@@ -51,8 +51,8 @@ const Approvals = () => {
   useEffect(() => {
     const conflicts = {};
 
-    // Filter out requests from same-role users (as in rendering logic)
-    const visible = (list || []).filter((r) => r?.user && r.user.role !== user.role);
+    // Filter out requests from same-role users (except tenant admins can see other tenant admins)
+    const visible = (list || []).filter((r) => r?.user && (user.role === 'tenant_admin' ? true : r.user.role !== user.role));
 
     // Map: position -> { dateStr -> count }
     const byPosDate = {};
@@ -130,10 +130,10 @@ const Approvals = () => {
     dispatch(fetchApprovedRequests());
   };
 
-  // Group requests by user.position, excluding same-role requests
+  // Group requests by user.position, excluding same-role requests (except tenant admins)
   const groupedByPosition = list.reduce((acc, r) => {
     if (!r?.user) return acc;
-    if (r.user.role === user.role) return acc;
+    if (user.role !== 'tenant_admin' && r.user.role === user.role) return acc;
     const pos = r.user.position || 'No position';
     if (!acc[pos]) acc[pos] = [];
     acc[pos].push(r);
