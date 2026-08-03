@@ -3,12 +3,19 @@ import mongoose from 'mongoose';
 const wfhRequestSchema = new mongoose.Schema({
   tenant: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  // User data snapshot to preserve information even after user deletion
+  userName: { type: String },
+  userEmail: { type: String },
+  userPosition: { type: String },
+  userRole: { type: String },
   type: { type: String, enum: ['wfh', 'sick', 'timeoff'], required: true },
   date: { type: Date, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   motivation: { type: String },
   rejectionReason: { type: String }, // Store rejection reason
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // User who approved or rejected the request
+  approvedByName: { type: String }, // Snapshot of approver name
+  approvedByEmail: { type: String }, // Snapshot of approver email
   googleCalendarEventId: { type: String }, // Store Google Calendar event ID for sync
   createdAt: { type: Date, default: Date.now }
 });

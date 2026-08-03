@@ -1,13 +1,13 @@
 import styles from '../styles/ApprovalCard.module.css';
 
-const ApprovalCard = ({ request, onApprove, onReject, loading }) => { 
+const ApprovalCard = ({ request, onApprove, onReject, loading }) => {
   if (!request) return null;
-  const { _id, user, type, date, status } = request;
+  const { _id, user, type, date, status, userName } = request;
 
   return (
     <li className={styles.card}>
       <div>
-        <h3 className={styles.name}>{user.name}</h3>
+        <h3 className={styles.name}>{user?.name || userName}</h3>
         <p><strong>Date:</strong> {new Date(date).toLocaleDateString()}</p>
       </div>
       <div>

@@ -176,10 +176,16 @@ export const requestWfh = async (req, res) => {
     const newRequest = await WfhRequest.create({
       tenant: tenantId,
       user: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userPosition: user.position,
+      userRole: user.role,
       type,
       date,
       status: status || 'pending',
       approvedBy: status === 'approved' ? actor._id : undefined,
+      approvedByName: status === 'approved' ? actor.name : undefined,
+      approvedByEmail: status === 'approved' ? actor.email : undefined,
     });
 
     // Only send approval emails for pending requests
@@ -282,6 +288,8 @@ export const approveRequest = async (req, res) => {
 
     request.status = 'approved';
     request.approvedBy = req.user._id;
+    request.approvedByName = req.user.name;
+    request.approvedByEmail = req.user.email;
     await request.save();
 
     // Sync to Google Calendar for WFH requests
@@ -328,6 +336,8 @@ export const rejectRequest = async (req, res) => {
     request.status = 'rejected';
     request.rejectionReason = reason || 'No reason provided';
     request.approvedBy = req.user._id;
+    request.approvedByName = req.user.name;
+    request.approvedByEmail = req.user.email;
     await request.save();
 
     // Get approvers/tenant admins for contact information
@@ -466,10 +476,10 @@ export const exportWfhRequests = async (req, res) => {
     const csvHeader = 'Date,User,Status,Reason,Approver\n';
     const csvRows = requests.map((r) => {
       const date = r.date ? new Date(r.date).toISOString().slice(0, 10) : '';
-      const user = r.user?.name || 'Unknown';
+      const user = r.user?.name || r.userName || 'Unknown';
       const status = r.status || 'unknown';
       const reason = r.rejectionReason || '';
-      const approver = r.approvedBy?.name || '';
+      const approver = r.approvedBy?.name || r.approvedByName || '';
       return `"${date}","${user}","${status}","${reason}","${approver}"`;
     }).join('\n');
 
