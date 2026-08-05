@@ -8,6 +8,9 @@ import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 import { resolveTenantFromRequest } from '../utils/tenant.js';
 import { validateEmail, validatePassword } from '../utils/validation.js';
+import crypto from 'crypto';
+import PasswordResetToken from '../models/PasswordResetToken.js';
+import { getPasswordResetTemplate } from '../utils/emailTemplate.js';
 
 const router = express.Router();
 
@@ -192,21 +195,34 @@ router.post('/recover', (req, res, next) => {
       }
     }
 
-    // send email to all tenant admins for the user's tenant
-    const tenantAdmins = await User.find({ tenant: tenant._id, role: 'tenant_admin' });
-    if (tenantAdmins.length === 0) {
-      return res.status(500).json({ message: 'No tenant admins found to handle recovery request' });
-    }
+    // generate random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
 
-    const adminEmails = tenantAdmins.map(admin => admin.email);
-    console.log(`[AUTH] Password recovery requested by ${user.email} from tenant ${tenant?.name || 'Unknown'}. Sent to tenant admins: ${adminEmails.join(', ')}`);
-    await sendEmail({
-      to: adminEmails,
-      subject: `Password Recovery for ${user.name}`,
-      text: `User ${user.name} (${user.email}) from ${tenant?.name || 'Unknown tenant'} requested a password reset.`
+    // set expiration 
+    const expirationHours = parseInt(process.env.PASSWORD_RESET_EXPIRATION_HOURS || '1', 10);
+    const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
+
+    // store token in database
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    await PasswordResetToken.create({
+      user: user._id,
+      token: hashedToken,
+      expiresAt: expiresAt
     });
 
-    res.json({ message: 'Recovery request sent to admin' });
+    // create reset link
+    const resetLink = `${process.env.FRONTEND_URL || process.env.VITE_BASE_URL || 'http://localhost:7091'}/reset-password/${resetToken}`;
+
+    // send email to requester
+    console.log(`[AUTH] Password recovery requested by ${user.email} from tenant ${tenant?.name || 'Unknown'}. Sending reset link to user.`);
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      text: `Hello ${user.name},\n\nYou have requested to reset your password. Please click the link below to reset your password:\n\n${resetLink}\n\nThis link will expire in ${expirationHours} hour(s).\n\nIf you did not request this, please ignore this email.\n\nBest regards,\nThe DigiFlex Team`,
+      html: getPasswordResetTemplate(user.name, resetLink, expirationHours)
+    })
+
+    res.json({ message: 'Password reset link sent to your email' });
   } catch(err) {
     console.error('[AUTH] Error in recover route:', err);
     res.status(500).json({ message: 'Internal server error' });

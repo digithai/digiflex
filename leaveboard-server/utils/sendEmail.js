@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-const sendEmail = async ({ to, subject, text }) => {
+const sendEmail = async ({ to, subject, text, html }) => {
   let transporter;
 
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging') {
@@ -31,6 +31,7 @@ const sendEmail = async ({ to, subject, text }) => {
     to,
     subject,
     text,
+    html,
   });
 };
 

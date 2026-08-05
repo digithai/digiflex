@@ -29,7 +29,7 @@ const ForgotPassword = () => {
 
     const data = await res.json();
 
-    if (res.ok) setStatus('✅ Email sent to admin');
+    if (res.ok) setStatus('✅ Password reset link sent to your email');
     else if (data.message?.toLowerCase().includes('tenant')) setStatus(`❌ ${data.message}`);
     else setStatus(`❌ ${data.message || 'Unable to send recovery request.'}`);
   };
