@@ -40,7 +40,7 @@ const ResetPassword = () => {
                 if (res.ok) {
                     setIsTokenValid(true);
                 } else {
-                    setStatus(data.message || "Invalid or expired reset link.");
+                    setStatus(data.message || "This password reset link is invalid or has expired.");
                     setIsSuccess(false);
                     setIsTokenValid(false);
                 }
@@ -55,7 +55,7 @@ const ResetPassword = () => {
             }
         };
         validateToken();
-    }, [token, validateUrl]);
+    }, [token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -93,7 +93,7 @@ const ResetPassword = () => {
                 setIsSuccess(true);
                 setTimeout(() => {
                     navigate("/login");
-                }, 2000);
+                }, import.meta.env.VITE_PASSWORD_REDIRECT_DELAY_MILLISECONDS || 2000);
             }
             else {
                 setStatus(data.message || "Failed to reset password");
@@ -118,23 +118,12 @@ const ResetPassword = () => {
                 <p>Validating reset link...</p>
             ) : !isTokenValid ? (
                 <>
-                    {status && <div className={styles.error}>{status}</div>}
-                    <div style={{textAlign: 'center', marginTop: '8px'}}>
+                    {status && <div className={styles.errorToast}><div className={styles.errorToastMessage}>{status}</div></div>}
+                    <div style={{textAlign: 'center'}}>
                         <button 
                             type="button" 
                             onClick={() => navigate('/forgot-password')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--blue)',
-                                textDecoration: 'none',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                padding: 0
-                            }}
-                            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                            className={styles.linkButton}
                         >
                             Request new password reset
                         </button>
@@ -170,18 +159,7 @@ const ResetPassword = () => {
                         <button 
                             type="button" 
                             onClick={() => navigate('/login')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--blue)',
-                                textDecoration: 'none',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                padding: 0
-                            }}
-                            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                            className={styles.linkButton}
                         >
                             Back to login
                         </button>

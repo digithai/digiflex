@@ -135,3 +135,34 @@
   min-height: 20px;
   font-size: 13px;
 }
+
+.linkButton {
+  background: none;
+  border: none;
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0;
+}
+ 
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.errorToast {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 16px 20px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  margin: 16px 0;
+}
+
+.errorToastMessage {
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 500;
+}

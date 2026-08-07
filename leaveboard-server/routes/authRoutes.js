@@ -49,6 +49,17 @@ const passwordRecoveryLimiter = rateLimit({
   },
 });
 
+const resetTokenLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30, // higher limit for token validation and reset
+  message: { message: 'Too many attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
+});
+
 // Helper function to validate reset token
 const validateResetToken = async (token) => {
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -220,6 +231,10 @@ router.post('/recover', (req, res, next) => {
 
     // store token in database
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // Delete existing unused tokens for this user before creating a new one
+    await PasswordResetToken.deleteMany({ user: user._id, isUsed: false });
+    
     await PasswordResetToken.create({
       user: user._id,
       token: hashedToken,
@@ -246,7 +261,10 @@ router.post('/recover', (req, res, next) => {
 });
 
 // Reset password route
-router.post('/reset-password', async(req, res) => {
+router.post('/reset-password', (req, res, next) => {
+  console.log('[AUTH] Reset password attempt from IP:', req.ip);
+  resetTokenLimiter(req, res, next);
+}, async(req, res) => {
   const { token, newPassword } = req.body;
 
   // validate inputs
@@ -262,19 +280,23 @@ router.post('/reset-password', async(req, res) => {
 
   const { valid, resetToken } = await validateResetToken(token);
   if (!valid) {
-    return res.status(400).json({ message: 'Invalid or expired reset token' });
+    return res.status(400).json({ message: 'This password reset link is invalid or has expired' });
   }
 
   try{
-    // hash new user password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
-    // update user password
-    await User.findByIdAndUpdate(resetToken.user._id, { password: hashedPassword });
-    
     // mark token as used
     resetToken.isUsed = true;
     await resetToken.save();
+
+    // verify user still exists
+    const user = await User.findById(resetToken.user._id);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // update user password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(resetToken.user._id, { password: hashedPassword });
     
     res.json({ message: 'Password reset successfully' });
   }
@@ -286,13 +308,16 @@ router.post('/reset-password', async(req, res) => {
 
 
 // Validate reset token 
-router.post('/validate-reset-token', async(req, res) => {
+router.post('/validate-reset-token', (req, res, next) => {
+  console.log('[AUTH] Validate reset token attempt from IP:', req.ip);
+  resetTokenLimiter(req, res, next);
+}, async(req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ message: 'Token is required' });
   
   try{
     const { valid, resetToken } = await validateResetToken(token);
-    if (!valid) return res.status(400).json({ message: 'Invalid or expired reset token' });
+    if (!valid) return res.status(400).json({ message: 'This password reset link is invalid or has expired' });
     
     res.json({ message: 'Token is valid' });
   }
