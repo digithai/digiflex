@@ -49,6 +49,22 @@ const passwordRecoveryLimiter = rateLimit({
   },
 });
 
+// Helper function to validate reset token
+const validateResetToken = async (token) => {
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const resetToken = await PasswordResetToken.findOne({
+    token: hashedToken,
+    isUsed: false,
+    expiresAt: { $gt: new Date()}
+  }).populate('user');
+  
+  if (!resetToken) {
+    return { valid: false, resetToken: null };
+  }
+  return { valid: true, resetToken };
+};
+
+
 // ✅ login route now calls the real controller with rate limiting
 router.post('/login', (req, res, next) => {
   console.log('[AUTH] Login attempt from IP:', req.ip);
@@ -244,21 +260,12 @@ router.post('/reset-password', async(req, res) => {
     return res.status(400).json({ message: passwordError });
   }
 
+  const { valid, resetToken } = await validateResetToken(token);
+  if (!valid) {
+    return res.status(400).json({ message: 'Invalid or expired reset token' });
+  }
+
   try{
-    // hash the incoming token to compare with stored hash
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-    // find valid token
-    const resetToken = await PasswordResetToken.findOne({
-      token: hashedToken,
-      isUsed: false,
-      expiresAt: { $gt: new Date()}
-    }).populate('user');
-
-    if (!resetToken) {
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
-    }
-    
     // hash new user password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
@@ -276,4 +283,24 @@ router.post('/reset-password', async(req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+// Validate reset token 
+router.post('/validate-reset-token', async(req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ message: 'Token is required' });
+  
+  try{
+    const { valid, resetToken } = await validateResetToken(token);
+    if (!valid) return res.status(400).json({ message: 'Invalid or expired reset token' });
+    
+    res.json({ message: 'Token is valid' });
+  }
+  catch(err){
+    console.error('[AUTH] Error in validate-reset-token route:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+  
+});
+
 export default router;
