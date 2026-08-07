@@ -13,6 +13,8 @@ import NotFound from './pages/NotFound';
 import AuthChecker from './hooks/authChecker';
 import SettingsPage from './pages/SettingsPage';
 import TenantPortal from './pages/TenantPortal';
+import ResetPassword from './pages/ResetPassword';
+
 
 function App() {
 
@@ -58,6 +60,7 @@ function App() {
         
         <Route path="/not-authorized" element={<NotAuthorized />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </>
   );

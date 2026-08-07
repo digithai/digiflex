@@ -51,8 +51,24 @@ const ForgotPassword = () => {
         <button type="submit" className={styles.button}>
           Send Recovery Request
         </button>
-        <div className={styles.actions}>
-          <Link to="/login" className={styles.link}>Back to login</Link>
+        <div style={{textAlign: 'center', marginTop: '8px'}}>
+          <Link 
+            to="/login" 
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--blue)',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              padding: 0
+            }}
+            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+          >
+            Back to login
+          </Link>
         </div>
       </form>
       {status && <p className={status.startsWith('❌') ? styles.error : styles.status}>{status}</p>}

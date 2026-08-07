@@ -198,8 +198,8 @@ router.post('/recover', (req, res, next) => {
     // generate random token
     const resetToken = crypto.randomBytes(32).toString('hex');
 
-    // set expiration 
-    const expirationHours = parseInt(process.env.PASSWORD_RESET_EXPIRATION_HOURS || '1', 10);
+    // set expiration
+    const expirationHours = parseFloat(process.env.PASSWORD_RESET_EXPIRATION_HOURS || '1');
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
 
     // store token in database
@@ -229,4 +229,51 @@ router.post('/recover', (req, res, next) => {
   }
 });
 
+// Reset password route
+router.post('/reset-password', async(req, res) => {
+  const { token, newPassword } = req.body;
+
+  // validate inputs
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: 'Token and new password are required' });
+  }
+
+  // validate password strength
+  const passwordError = validatePassword(newPassword);
+  if (passwordError) {
+    return res.status(400).json({ message: passwordError });
+  }
+
+  try{
+    // hash the incoming token to compare with stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // find valid token
+    const resetToken = await PasswordResetToken.findOne({
+      token: hashedToken,
+      isUsed: false,
+      expiresAt: { $gt: new Date()}
+    }).populate('user');
+
+    if (!resetToken) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+    
+    // hash new user password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // update user password
+    await User.findByIdAndUpdate(resetToken.user._id, { password: hashedPassword });
+    
+    // mark token as used
+    resetToken.isUsed = true;
+    await resetToken.save();
+    
+    res.json({ message: 'Password reset successfully' });
+  }
+  catch(err) {
+    console.error('[AUTH] Error in reset-password route:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 export default router;
