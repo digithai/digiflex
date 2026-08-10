@@ -100,7 +100,11 @@ const UserCalendar = ({ refreshKey = 0 }) => {
     const label = String(req.type).toUpperCase();
 
     if (req.status === 'pending' && type === 'wfh') {
-      return <div className={styles.pending}>{label}</div>;
+      return <span className={styles.pending}>{label}</span>;
+    }
+
+    if (type === 'wfh') {
+      return <span className={styles.wfh}>{label}</span>;
     }
 
     return <div className={styles[type]}>{label}</div>
