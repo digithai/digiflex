@@ -35,7 +35,7 @@ h2 {
 .namesColumn {
   flex-shrink: 0;
   width: 150px;
-  background: var(--surface);
+  background: linear-gradient(135deg, #e8f0f7 0%, #d9e6f2 100%);
   border-right: 2px solid var(--surface-border);
   display: flex;
   flex-direction: column;
@@ -60,12 +60,12 @@ h2 {
 }
 
 .nameCell {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: transparent;
   color: var(--text-secondary);
   padding: 10px 12px;
   font-weight: 600;
   text-align: left;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-right: 2px solid var(--blue);
   border-top: none;
   height: 45px;
