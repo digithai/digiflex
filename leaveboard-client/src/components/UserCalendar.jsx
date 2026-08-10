@@ -5,31 +5,23 @@ const UserCalendar = ({ refreshKey = 0 }) => {
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [holidays, setHolidays] = useState([]);
-  const [disallowedWeekdays, setDisallowedWeekdays] = useState([1, 5, 0, 6]); // default: Mon, Fri, weekend
+  const [disallowedWeekdays, setDisallowedWeekdays] = useState([1, 5, 0, 6]);
   const token = localStorage.getItem('token');
 
-  // Compute 31 days in advance
   const getDates = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // If today is Sunday, skip to tomorrow
-  const startDate = today.getDay() === 0 ? new Date(today.setDate(today.getDate() + 1)) : new Date(today);
-
-  const dates = [];
-  let currentDate = new Date(startDate);
-
-  // Generate 31 days
-  for (let i = 0; i < 31; i++) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dates;
-};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = today.getDay() === 0 ? new Date(today.setDate(today.getDate() + 1)) : new Date(today);
+    const dates = [];
+    let currentDate = new Date(startDate);
+    for (let i = 0; i < 31; i++) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return dates;
+  };
 
   const dates = getDates();
-
   const url = `${import.meta.env.VITE_BASE_URL}/api/calendar`;
   const holidaysUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
@@ -38,15 +30,9 @@ const UserCalendar = ({ refreshKey = 0 }) => {
     const fetchData = async () => {
       try {
         const [calRes, holRes, settingsRes] = await Promise.all([
-          fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(holidaysUrl, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(settingsUrl, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(holidaysUrl, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(settingsUrl, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
         const calData = await calRes.json();
@@ -62,10 +48,9 @@ const UserCalendar = ({ refreshKey = 0 }) => {
 
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
-          const serverDisallowed =
-            (settingsData && settingsData.disallowedWeekdays && settingsData.disallowedWeekdays.length)
-              ? settingsData.disallowedWeekdays
-              : [1, 5, 0, 6];
+          const serverDisallowed = (settingsData?.disallowedWeekdays?.length) 
+            ? settingsData.disallowedWeekdays 
+            : [1, 5, 0, 6];
           setDisallowedWeekdays(serverDisallowed.map((n) => Number(n)));
         } else {
           setDisallowedWeekdays([1, 5, 0, 6]);
@@ -83,73 +68,77 @@ const UserCalendar = ({ refreshKey = 0 }) => {
   }, [url, holidaysUrl, token, refreshKey]);
 
   const formatDate = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-
-  // Sort users alphabetically by name
   const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
-  const getCell = (userId, date) => {
-
+  const getCellContent = (user, date) => {
     const dayStr = formatDate(date);
-    const key = `${userId}-${dayStr}`;
-
     const holiday = holidays.find((h) => h?.date === dayStr);
 
     if (holiday) {
-      return <td key={key} className={styles.holiday}>{holiday.name || 'Holiday'}</td>;
+      return <div className={styles.holiday} title={holiday.name || 'Holiday'}>Holiday</div>;
     }
 
     const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isDisallowedWeekday = disallowedWeekdays.includes(dayOfWeek) && !isWeekend;
 
     if (isWeekend) {
-      return <td key={key} className={styles.weekend}></td>;
+      return <div className={styles.weekend}></div>;
     }
 
     if (isDisallowedWeekday) {
-      return <td key={key} className={styles.disallowedWeekday}></td>;
+      return <div className={styles.disallowedWeekday}></div>;
     }
 
     const req = requests.find(
-      (r) => r?.user?._id === userId && formatDate(new Date(r.date)) === dayStr
+      (r) => r?.user?._id === user._id && formatDate(new Date(r.date)) === dayStr
     );
-    if (!req) return <td key={key}></td>;
+    if (!req) return <div></div>;
 
     const type = String(req.type).toLowerCase();
     const label = String(req.type).toUpperCase();
 
-    // Highlight pending WFH in yellow
     if (req.status === 'pending' && type === 'wfh') {
-      return <td key={key} className={styles.pending}>{label}</td>;
+      return <div className={styles.pending}>{label}</div>;
     }
 
-    return <td key={key} className={styles[type]}>{label}</td>;
-  }
-
+    return <div className={styles[type]}>{label}</div>
+  };
 
   return (
     <div className={styles.container}>
-      <h2 >Team WFH Calendar</h2>
-      <table >
-        <thead>
-          <tr >
-            <th >Name</th>
-            {dates.map((date) => (
-              <th key={date} >
-                {date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
+      <h2>Team WFH Calendar</h2>
+      <div className={styles.calendarWrapper}>
+        <div className={styles.namesColumn}>
+          <div className={styles.columnHeader}>Name</div>
           {sortedUsers.map((user) => (
-            <tr key={user._id} >
-              <td >{user.name}</td>
-              {dates.map((date) => getCell(user._id, date))}
-            </tr>
+            <div key={user._id} className={styles.nameCell}>{user.name}</div>
           ))}
-        </tbody>
-      </table>
+        </div>
+        <div className={styles.dataGrid}>
+          <div className={styles.dateHeaders}>
+            {dates.map((date) => {
+              const isToday = formatDate(date) === today;
+              return (
+                <div key={date} className={`${styles.dateHeader} ${isToday ? styles.todayHeader : ''}`}>
+                  <div className={styles.weekday}>{date.toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                  <div className={styles.dateText}>{date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                </div>
+              );
+            })}
+          </div>
+          {sortedUsers.map((user) => (
+            <div key={user._id} className={styles.userRow}>
+              {dates.map((date) => (
+                <div key={`${user._id}-${formatDate(date)}`} className={styles.cell}>
+                  {getCellContent(user, date)}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
       <div className={styles.legend}>
         <div className={styles.legendItem}>
           <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, var(--green) 0%, #16a34a 100%)' }}></span>
@@ -161,7 +150,11 @@ const UserCalendar = ({ refreshKey = 0 }) => {
         </div>
         <div className={styles.legendItem}>
           <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, var(--grey-dark) 0%, #374151 100%)' }}></span>
-          <span>Weekend/Holiday</span>
+          <span>Weekend</span>
+        </div>
+        <div className={styles.legendItem}>
+          <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)' }}></span>
+          <span>Holiday</span>
         </div>
         <div className={styles.legendItem}>
           <span className={styles.legendColor} style={{ background: '#fff', border: '1px solid #e5e7eb', position: 'relative' }}>
