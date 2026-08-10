@@ -12,11 +12,10 @@
 h2 {
   text-align: center;
   margin-bottom: 24px;
-  font-size: 24px;
+  font-size: 20px !important;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: 0.02em;
-  text-transform: uppercase;
   background: linear-gradient(135deg, var(--blue) 0%, #152c5f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

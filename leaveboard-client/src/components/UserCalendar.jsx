@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import styles from '../styles/UserCalendar.module.css';
 
+const truncateText = (text, maxLength) => {
+  if (!text) return 'Holiday';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
 const UserCalendar = ({ refreshKey = 0 }) => {
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -76,7 +82,8 @@ const UserCalendar = ({ refreshKey = 0 }) => {
     const holiday = holidays.find((h) => h?.date === dayStr);
 
     if (holiday) {
-      return <div className={styles.holiday} title={holiday.name || 'Holiday'}>Holiday</div>;
+      const displayName = truncateText(holiday.name || 'Holiday', 7);
+      return <div className={styles.holiday} title={holiday.name || 'Holiday'}>{displayName}</div>;
     }
 
     const dayOfWeek = date.getDay();
