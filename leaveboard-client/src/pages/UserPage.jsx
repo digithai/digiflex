@@ -11,9 +11,9 @@ const UserPage = () => {
   return (
     <div className={styles.MainPage}>
       <h1 >User Panel</h1>
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', alignItems: 'flex-start' }}>
-      <WfhRequestForm onSubmitted={handleSubmitted} />
-      <WFHRules />
+      <div className={styles.topRow}>
+        <WfhRequestForm onSubmitted={handleSubmitted} />
+        <WFHRules />
       </div>
       <UserCalendar refreshKey={refreshKey} />
       </div>

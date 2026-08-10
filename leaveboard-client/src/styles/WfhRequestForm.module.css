@@ -1,12 +1,14 @@
 .wfhRequestForm {
   display: flex;
   flex-direction: column;
-  align-items: normal;
-  background: var(--surface);
+  align-items: left;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border: 1px solid var(--surface-border);
-  border-radius: var(--radius);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  min-width: 0;
 }
 
 .wfhRequestForm * {
@@ -19,6 +21,11 @@
   color: var(--text-primary);
   margin-bottom: 20px;
   letter-spacing: 0.02em;
+  text-align: center;
+  background: linear-gradient(135deg, var(--blue) 0%, #152c5f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .wfhRequestForm label {
