@@ -28,7 +28,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const { start, end } = getCalendarRange();
 
-    const users = await User.find({ tenant: req.user.tenant._id }).select('name email');
+    const users = await User.find({ tenant: req.user.tenant._id }).select('name email position');
 
     const requests = await wfhRequestSchema.find({
       tenant: req.user.tenant._id,

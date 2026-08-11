@@ -133,7 +133,8 @@ const UserCalendar = ({ refreshKey = 0 }) => {
 
   return (
     <div className={styles.container}>
-      <h2>Team WFH Calendar</h2>
+      <h2 className={styles.calendarTitle}>Team Work From Home Calendar</h2>
+      <span className={styles.calendarSubtitle}>31-day rolling schedule of team attendance, holidays, and pending requests</span>
       
       {loading && (
         <div className={styles.stateMessage}>
@@ -160,7 +161,10 @@ const UserCalendar = ({ refreshKey = 0 }) => {
             <div className={styles.namesColumn}>
               <div className={styles.columnHeader}>Name</div>
               {sortedUsers.map((user) => (
-                <div key={user._id} className={styles.nameCell}>{user.name}</div>
+                <div key={user._id} className={styles.nameCell}>
+                  <div className={styles.userName}>{user.name}</div>
+                  {user.position && <div className={styles.userPosition} title={user.position}>{user.position}</div>}
+                </div>
               ))}
             </div>
             <div className={styles.dataGrid}>

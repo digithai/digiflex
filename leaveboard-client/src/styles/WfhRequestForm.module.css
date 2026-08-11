@@ -1,31 +1,15 @@
 .wfhRequestForm {
   display: flex;
   flex-direction: column;
-  align-items: left;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border: 1px solid var(--surface-border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+  align-items: flex-start;
   width: 100%;
   min-width: 0;
 }
 
 .wfhRequestForm * {
   margin-bottom: 16px;
-}
-
-.wfhRequestForm h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  letter-spacing: 0.02em;
-  text-align: center;
-  background: linear-gradient(135deg, var(--blue) 0%, #152c5f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .wfhRequestForm label {
@@ -44,6 +28,7 @@
   color: var(--text-primary);
   background: #fff;
   transition: all 0.2s ease;
+  width: 100%;
 }
 
 .wfhRequestForm select {
@@ -75,6 +60,7 @@
   letter-spacing: 0.02em;
   transition: all 0.2s ease;
   margin-top: 8px;
+  width: 100%;
 }
 
 .wfhRequestForm button[type="submit"]:hover:not(:disabled) {

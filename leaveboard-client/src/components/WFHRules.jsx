@@ -112,7 +112,6 @@ const WFHRules = () => {
 
   return (
     <section className={styles.rulesSection}>
-      <h2>Work From Home Rules</h2>
       {loading && <p>Loading rules...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <ul>
