@@ -126,17 +126,11 @@ const WFHRules = () => {
           WFH requests for that week.
         </li>
         <li>{renderConcurrencyRule()}</li>
-        {concurrencyEntries.length > 0 && (
-          <li>
-            <ul>
-              {concurrencyEntries.map(([position, value]) => (
-                <li key={position}>
-                  {position}: up to {value} user(s) WFH on the same day
-                </li>
-              ))}
-            </ul>
+        {concurrencyEntries.map(([position, value]) => (
+          <li key={position}>
+            {position}: up to {value} user(s) WFH on the same day
           </li>
-        )}
+        ))}
       </ul>
     </section>
   );
