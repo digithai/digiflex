@@ -1,4 +1,5 @@
 import WfhRequestForm from '../components/WfhRequestForm';
+import { WfhBalance } from '../pages/UserPage';
 import styles from '../styles/MainPage.module.css';
 import ApprovedWfhList from '../components/ApprovedWfhList';
 
@@ -14,9 +15,13 @@ const ApproverPage = () => {
             <WfhRequestForm />
           </div>
         </div>
-        {/* <div className={styles.cardEmpty}> */}
-          {/* WFH Balance - approver specific */}
-        {/* </div> */}
+        <div className={styles.card}>
+          <h2 className={styles.cardHeading}>WFH Balance</h2>
+          <span className={styles.cardSubheading}>Quota and upcoming holidays</span>
+          <div className={styles.cardContent}>
+            <WfhBalance />
+          </div>
+        </div>
       </div>
       <ApprovedWfhList showApprovedList={false} />
     </div>

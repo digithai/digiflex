@@ -46,9 +46,13 @@ const UserPage = () => {
             <WfhRequestForm onSubmitted={handleSubmitted} />
           </div>
         </div>
-        {/* <div className={styles.cardEmpty}> */}
-          {/* WFH Balance - to be implemented later */}
-        {/* </div> */}
+        <div className={styles.card}>
+          <h2 className={styles.cardHeading}>WFH Balance</h2>
+          <span className={styles.cardSubheading}>Quota and upcoming holidays</span>
+          <div className={styles.cardContent}>
+            <WfhBalance />
+          </div>
+        </div>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>Work From Home Policy</h2>
           <span className={styles.cardSubheading}>Company compliance guidelines</span>
@@ -62,6 +66,69 @@ const UserPage = () => {
       </div>
       <UserCalendar refreshKey={refreshKey} />
       </div>
+  );
+};
+
+const DonutChart = ({ total, used, label }) => {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const usedDash = total > 0 ? (used / total) * circumference : 0;
+  const remaining = total - used;
+
+  return (
+    <div className={styles.donutWrapper}>
+      <svg className={styles.donutSvg} viewBox="0 0 100 100">
+        <circle className={styles.donutTrack} cx="50" cy="50" r={radius} />
+        <circle
+          className={styles.donutFill}
+          cx="50"
+          cy="50"
+          r={radius}
+          strokeDasharray={`${usedDash} ${circumference}`}
+        />
+        <text x="50" y="45" textAnchor="middle" className={styles.donutValue}>
+          {remaining}
+        </text>
+        <text x="50" y="60" textAnchor="middle" className={styles.donutUnit}>
+          left
+        </text>
+      </svg>
+      <div className={styles.donutLabel}>{label}</div>
+      <div className={styles.donutMeta}>{used} / {total} used</div>
+    </div>
+  );
+};
+
+export const WfhBalance = () => {
+  const weeklyQuota = 2;
+  const weeklyUsed = 1;
+  const totalQuota = 20;
+  const totalUsed = 8;
+  const upcomingHolidays = [
+    { name: 'Independence Day', date: '2026-08-20', daysAway: 9 },
+    { name: 'National Day', date: '2026-08-25', daysAway: 14 },
+  ];
+
+  return (
+    <div className={styles.wfhBalance}>
+      <div className={styles.donutGrid}>
+        <DonutChart total={weeklyQuota} used={weeklyUsed} label="Weekly Balance" />
+        <DonutChart total={totalQuota} used={totalUsed} label="Total Balance" />
+      </div>
+
+      <div className={styles.holidaySection}>
+        <div className={styles.holidayHeading}>Upcoming public holidays</div>
+        <div className={styles.holidayGrid}>
+          {upcomingHolidays.map((h) => (
+            <div className={styles.holidayCard} key={h.date}>
+              <div className={styles.holidayDate}>{h.date}</div>
+              <div className={styles.holidayName}>{h.name}</div>
+              <span className={styles.holidayAway}>{h.daysAway} days away</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
