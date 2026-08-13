@@ -7,6 +7,7 @@ import { validateEmail } from '../utils/validation';
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const url = `${import.meta.env.VITE_BASE_URL}/api/auth/recover`;
 
@@ -15,7 +16,8 @@ const ForgotPassword = () => {
 
     const emailError = validateEmail(email);
     if (emailError) {
-      setStatus(`❌ ${emailError}`);
+      setStatus(emailError);
+      setIsSuccess(false);
       return;
     }
 
@@ -29,9 +31,18 @@ const ForgotPassword = () => {
 
     const data = await res.json();
 
-    if (res.ok) setStatus('✅ Email sent to admin');
-    else if (data.message?.toLowerCase().includes('tenant')) setStatus(`❌ ${data.message}`);
-    else setStatus(`❌ ${data.message || 'Unable to send recovery request.'}`);
+    if (res.ok) {
+      setStatus('Password reset link sent to your email');
+      setIsSuccess(true);
+    } 
+    else if (data.message?.toLowerCase().includes('tenant')) {
+      setStatus(`${data.message}`);
+      setIsSuccess(false);
+    } 
+    else {
+      setStatus(`${data.message || 'Unable to send recovery request.'}`);
+      setIsSuccess(false);
+    }
   };
 
   return (
@@ -51,11 +62,27 @@ const ForgotPassword = () => {
         <button type="submit" className={styles.button}>
           Send Recovery Request
         </button>
-        <div className={styles.actions}>
-          <Link to="/login" className={styles.link}>Back to login</Link>
+        <div style={{textAlign: 'center', marginTop: '8px'}}>
+          <Link 
+            to="/login" 
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--blue)',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              padding: 0
+            }}
+            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+          >
+            Back to login
+          </Link>
         </div>
       </form>
-      {status && <p className={status.startsWith('❌') ? styles.error : styles.status}>{status}</p>}
+      {status && <p className={isSuccess ? styles.status : styles.error}>{status}</p>}
     </div>
   );
 };

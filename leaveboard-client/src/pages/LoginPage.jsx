@@ -56,16 +56,31 @@ const LoginPage = () => {
           type="password"
           required
         />
+
+        {error && <p className={styles.error}>{error}</p>}
+
         <button className={styles.button} type="submit" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
-        <div className={styles.actions}>
-          <Link to="/forgot-password" className={styles.link}>
+        <div style={{textAlign: 'center', marginTop: '8px'}}>
+          <Link
+            to="/forgot-password"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--blue)',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              padding: 0
+            }}
+            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+          >
             Forgot password?
           </Link>
         </div>
-
-        {error && <p className={styles.error}>{error}</p>}
 
       </form>
     </div>
