@@ -77,20 +77,46 @@ const DonutChart = ({ total, used, label }) => {
 
   return (
     <div className={styles.donutWrapper}>
-      <svg className={styles.donutSvg} viewBox="0 0 100 100">
-        <circle className={styles.donutTrack} cx="50" cy="50" r={radius} />
+      <svg 
+        className={styles.donutSvg} 
+        viewBox="0 0 100 100"
+        shapeRendering="geometricPrecision"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle 
+          className={styles.donutTrack} 
+          cx="50" 
+          cy="50" 
+          r={radius} 
+          shapeRendering="geometricPrecision"
+        />
         <circle
           className={styles.donutFill}
           cx="50"
           cy="50"
           r={radius}
           strokeDasharray={`${usedDash} ${circumference}`}
+          shapeRendering="geometricPrecision"
         />
-        <text x="50" y="45" textAnchor="middle" className={styles.donutValue}>
+        <text 
+          x="50" 
+          y="48" 
+          dominantBaseline="middle" 
+          textAnchor="middle" 
+          className={styles.donutValue}
+          shapeRendering="optimizeLegibility"
+        >
           {remaining}
         </text>
-        <text x="50" y="60" textAnchor="middle" className={styles.donutUnit}>
-          left
+        <text 
+          x="50" 
+          y="65" 
+          dominantBaseline="middle" 
+          textAnchor="middle" 
+          className={styles.donutUnit}
+          shapeRendering="optimizeLegibility"
+        >
+          days left
         </text>
       </svg>
       <div className={styles.donutLabel}>{label}</div>
@@ -121,9 +147,13 @@ export const WfhBalance = () => {
         <div className={styles.holidayGrid}>
           {upcomingHolidays.map((h) => (
             <div className={styles.holidayCard} key={h.date}>
-              <div className={styles.holidayDate}>{h.date}</div>
-              <div className={styles.holidayName}>{h.name}</div>
-              <span className={styles.holidayAway}>{h.daysAway} days away</span>
+              <div className={styles.holidayHeader}>
+                <span className={styles.holidayName}>{h.name}</span>
+              </div>
+              <div className={styles.holidayInfo}>
+                <span className={styles.holidayDate}>{h.date}</span>
+                <span className={styles.holidayAway}>{h.daysAway} days away</span>
+              </div>
             </div>
           ))}
         </div>
