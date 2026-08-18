@@ -440,7 +440,6 @@
   pointer-events: none;
 }
 
-
 /* WFH Policy */
 .ruleHighlight {
   display: inline-block;
@@ -492,6 +491,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+
 }
 
 /* Policy modal */
@@ -664,3 +664,4 @@
 .pageTitle {
   margin: 0;
 }
+

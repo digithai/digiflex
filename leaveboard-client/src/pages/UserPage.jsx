@@ -91,6 +91,7 @@ const UserPage = () => {
         </button>
       </div>
 
+
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>Request WFH</h2>
@@ -129,6 +130,7 @@ const UserPage = () => {
                 <FiFileText className={styles.policyModalTitleIcon} />
                 <h2 className={styles.policyModalTitle}>Work From Home Policy</h2>
               </div>
+
               <button
                 type="button"
                 className={styles.policyModalClose}
@@ -150,6 +152,7 @@ const UserPage = () => {
                 Got it, thanks
               </button>
             </div>
+
           </div>
         </div>
       )}
