@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import SectionWrap from './SectionWrap';
 import styles from '../styles/WfhRequestForm.module.css';
+import { getWeekBounds } from '../utils/dateUtils';
 
-const WfhRequestForm = ({ onSubmitted }) => {
+const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const [type, setType] = useState('wfh');
   const [date, setDate] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -17,12 +18,14 @@ const WfhRequestForm = ({ onSubmitted }) => {
   const [disallowedWeekdays, setDisallowedWeekdays] = useState([1, 5, 0, 6]); // default: Monday, Friday, weekend
   const [blocked, setBlocked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [holidayAdjustmentData, setHolidayAdjustmentData] = useState(null);
 
   const url = `${import.meta.env.VITE_BASE_URL}/api/wfh/request`;
   const approvedUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approved`;
   const pendingUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approvals`;
   const holidaysUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
+  const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   useEffect(() => {
     if (type === 'sick' && Array.isArray(date)) {
@@ -85,20 +88,7 @@ const WfhRequestForm = ({ onSubmitted }) => {
     if (token) fetchSettings();
   }, [settingsUrl, token]);
 
-  const getWeekBounds = (d) => {
-    const dt = new Date(d);
-    // Week starts Monday (1) and ends Sunday (0)
-    const day = dt.getDay();
-    const diffToMonday = (day === 0 ? -6 : 1) - day; // how many days to add to reach Monday
-    const start = new Date(dt);
-    start.setDate(dt.getDate() + diffToMonday);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  };
-
+  // Check if WFH is blocked due to holidays or disallowed weekdays
   useEffect(() => {
     if (type === 'wfh' && user && date) {
       const selected = new Date(date);
@@ -183,6 +173,25 @@ const WfhRequestForm = ({ onSubmitted }) => {
       setBlocked(false);
     }
   }, [type, user, date, approved, pending, holidays, disallowedWeekdays]);
+
+  // Calculate holiday adjustment for target week
+  useEffect(() => {
+    if (targetWeek && holidays.length > 0 && user) {
+      const { start: weekStart, end: weekEnd } = targetWeek;
+      const holidaysInWeek = holidays.filter((h) => {
+        if (!h?.date) return false;
+        const hd = new Date(h.date);
+        return hd >= weekStart && hd <= weekEnd;
+      }).length;
+
+      const baseMaxDays = user.wfhWeekly || 1;
+      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
+      const weekLabel = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+      
+      setHolidayAdjustmentData({ holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays });
+
+    }
+  }, [targetWeek, holidays, user]);
 
   const countsForWeek = (() => {
     if (!user || !date) return { approved: 0, pending: 0, all: 0 };
@@ -284,6 +293,13 @@ const WfhRequestForm = ({ onSubmitted }) => {
 
   return (
     <SectionWrap type="request">
+      {/* show weekly quota */}
+      <div className={styles.quotaDisplay}>
+        <span className={styles.quotaLabel}>Weekly quota:</span>
+        <span className={styles.quotaValue}>{user.wfhWeekly || 1} day(s) / week</span>
+      </div>
+
+      {/* wfh request form */}
       <form className={styles.wfhRequestForm} onSubmit={handleSubmit} >
 
         <select value={type} onChange={(e) => setType(e.target.value)} >
@@ -304,7 +320,33 @@ const WfhRequestForm = ({ onSubmitted }) => {
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          <span><strong className={styles.holidayAdjustmentLabel}>Public Holiday Adjustment:</strong> There is 1 public holiday this week, automatically adjusting your WFH allowance from 2 to 1 day(s).</span>
+          {/* <span><strong className={styles.holidayAdjustmentLabel}>Public Holiday Adjustment:</strong> {holidayAdjustmentMessage}</span> */}
+            
+            {holidayAdjustmentData && (
+              <span>
+                <strong className={styles.holidayAdjustmentLabel}>Public Holiday Adjustment: </strong>
+                {holidayAdjustmentData.holidaysInWeek > 0 
+                  ? (
+                    <>
+                      There {holidayAdjustmentData.holidaysInWeek === 1 ? 'is' : 'are'} {holidayAdjustmentData.holidaysInWeek} public 
+                      holiday{holidayAdjustmentData.holidaysInWeek === 1 ? '' : 's'} for the week 
+                      <span className={styles.holidayAway}>({holidayAdjustmentData.weekLabel})</span>, automatically adjusting your 
+                      WFH allowance from 
+                      <span className={styles.holidayAway}>{holidayAdjustmentData.baseMaxDays}</span> to 
+                      <span className={styles.holidayAway}>{holidayAdjustmentData.effectiveMaxDays}</span> day.
+                      {holidayAdjustmentData.effectiveMaxDays === 1 ? '' : '(s).'}
+                    </>
+                  )
+                  : (
+                    <>
+                      No public holidays for the week 
+                      <span className={styles.holidayAway}>({holidayAdjustmentData.weekLabel})</span>. 
+                      No adjustment needed.
+                    </>
+                  )}
+              </span>
+            )}
+        
         </div>
 
         {message && <p >{message}</p>}

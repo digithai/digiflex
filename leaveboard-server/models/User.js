@@ -45,6 +45,16 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    wfhAnnualQuota: {
+        type: Number,
+        default: 30,
+        min: 0
+    },
+    wfhAnnualBalance: {
+        type: Number,
+        default: 0,
+        min: 0
     }
 }, 
 {

@@ -4,6 +4,7 @@
   align-items: flex-start;
   width: 100%;
   min-width: 0;
+  margin-top: 8px;
 }
 
 .wfhRequestForm * {
@@ -108,4 +109,39 @@
 
 .wfhRequestForm .holidayAdjustmentLabel {
   font-weight: 600;
+}
+
+.wfhRequestForm .holidayAway {
+  color: var(--blue);
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.quotaDisplay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  z-index: 10;
+}
+
+.quotaLabel {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.quotaValue {
+  color: var(--blue);
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
 }
