@@ -32,7 +32,7 @@ const AdminPage = () => {
     };
     if (token) fetchUser();
   }, [token, dispatch]);
-  
+
   return (
     <div className={styles.MainPage}>
       <h1>Admin Panel</h1>

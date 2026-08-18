@@ -12,6 +12,7 @@ import Chart from 'chart.js/auto';
 import { useDispatch } from 'react-redux';
 import { updateUser } from '../features/auth/authSlice';
 
+
 const UserPage = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
@@ -167,6 +168,7 @@ const DonutChart = ({ total, remaining, label }) => {
   const remainingNum = Math.max(0, Math.min(totalNum, Number.isFinite(Number(remaining)) ? Number(remaining) : 0));
   const used = totalNum - remainingNum;
 
+
   useEffect(() => {
     if (chartRef.current) {
       // Destroy existing chart if it exists
@@ -188,6 +190,7 @@ const DonutChart = ({ total, remaining, label }) => {
             backgroundColor: hasQuota
               ? [blueColor, '#e2e8f0']
               : ['#e2e8f0'],
+
             borderWidth: 0,
             cutout: '70%' // This creates the donut hole
           }]
@@ -235,6 +238,7 @@ const DonutChart = ({ total, remaining, label }) => {
         <div className={styles.donutMeta}>{used} / {totalNum} used</div>
       ) : (
         <div className={styles.donutMeta}>{totalNum} / {totalNum} used</div>
+
       )}
     </div>
   );
@@ -313,7 +317,6 @@ export const WfhBalance = () => {
 
   // effective weekly total after capped with annual balance
   const effectiveWeeklyTotal = weeklyUsed + weeklyRemaining;
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
