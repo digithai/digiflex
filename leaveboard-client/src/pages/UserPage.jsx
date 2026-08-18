@@ -12,6 +12,7 @@ import Chart from 'chart.js/auto';
 const UserPage = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showScrollHint, setShowScrollHint] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
   const rulesContentRef = useRef(null);
   const handleSubmitted = () => setRefreshKey((k) => k + 1);
   const { settings } = useWfhSettings();
@@ -47,7 +48,8 @@ const UserPage = () => {
 
   return (
     <div className={styles.MainPage}>
-      <h1 >User Panel</h1>
+      <h1 className={styles.pageTitle} style={{ marginBottom: '24px' }}>User Panel</h1>
+
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>Request WFH</h2>
@@ -66,19 +68,49 @@ const UserPage = () => {
             <WfhBalance />
           </div>
         </div>
-        <div className={styles.card}>
-          <h2 className={styles.cardHeading}>Work From Home Policy</h2>
-          <span className={styles.cardSubheading}>Company compliance guidelines</span>
+      </div>
+
+      <div className={styles.policyFooterBar}>
+        <button
+          type="button"
+          className={styles.policyLink}
+          onClick={() => setShowPolicy(true)}
+        >
+          View Work From Home Policy →
+        </button>
+      </div>
+
+      {showPolicy && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowPolicy(false)}
+          role="dialog"
+          aria-modal="true"
+        >
           <div
-            ref={rulesContentRef}
-            className={`${styles.cardContent} ${styles.scrollHint} ${showScrollHint ? styles.showHint : ''}`}
+            className={styles.policyModal}
+            onClick={(e) => e.stopPropagation()}
           >
-            <WFHRules />
+            <div className={styles.policyModalHeader}>
+              <h2 className={styles.policyModalTitle}>Work From Home Policy</h2>
+              <button
+                type="button"
+                className={styles.policyModalClose}
+                onClick={() => setShowPolicy(false)}
+                aria-label="Close policy"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.policyModalContent}>
+              <WFHRules />
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
       <UserCalendar refreshKey={refreshKey} />
-      </div>
+    </div>
   );
 };
 

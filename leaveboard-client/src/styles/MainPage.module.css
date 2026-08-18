@@ -1,7 +1,7 @@
 .MainPage {
   display: flex;
   flex-direction: column;
-  align-items: left;
+  align-items: stretch;
   padding: 0;
   margin-top: 0;
 }
@@ -9,7 +9,7 @@
 /* New wrapper-based card system */
 .cardRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1.5fr;
   grid-auto-rows: 1fr;
   gap: 24px;
   align-items: stretch;
@@ -429,4 +429,110 @@
   border-radius: 6px;
   font-weight: 600;
   font-size: 0.95em;
+
+.pageTitle {
+  margin: 0;
+}
+
+/* Policy footer link below cards */
+.policyFooterBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  max-width: calc(100vw - 350px);
+  margin-top: -8px;
+  margin-bottom: 24px;
+}
+
+.policyLink {
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.policyLink:hover {
+  text-decoration: underline;
+}
+
+/* Policy modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+.policyModal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  animation: slideUp 0.2s ease;
+}
+
+.policyModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.policyModalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.policyModalClose {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.policyModalClose:hover {
+  background: rgba(226, 232, 240, 0.6);
+  color: var(--text-primary);
+}
+
+.policyModalContent {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 }

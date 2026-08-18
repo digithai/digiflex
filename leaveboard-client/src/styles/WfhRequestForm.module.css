@@ -1,14 +1,16 @@
 .wfhRequestForm {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: 1;
   width: 100%;
   min-width: 0;
   margin-top: 8px;
+  gap: 12px;
 }
 
 .wfhRequestForm * {
-  margin-bottom: 16px;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -61,6 +63,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   transition: all 0.2s ease;
+  margin-top: auto;
   width: 100%;
 }
 
@@ -123,15 +126,13 @@
 }
 
 .quotaDisplay {
-  position: absolute;
-  top: 0;
-  right: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+  margin-bottom: 16px;
   font-size: 12px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  z-index: 10;
 }
 
 .quotaLabel {
