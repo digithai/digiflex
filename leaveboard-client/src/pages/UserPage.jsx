@@ -91,7 +91,6 @@ const UserPage = () => {
         </button>
       </div>
 
-
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>Request WFH</h2>
