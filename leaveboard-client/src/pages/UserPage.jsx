@@ -49,12 +49,24 @@ const UserPage = () => {
 
   return (
     <div className={styles.MainPage}>
-      <h1 className={styles.pageTitle} style={{ marginBottom: '24px' }}>User Panel</h1>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>User Panel</h1>
+        <button
+          type="button"
+          className={styles.policyButtonRight}
+          onClick={() => setShowPolicy(true)}
+          title="Work From Home Policy"
+        >
+          <FiInfo className={styles.policyButtonIcon} />
+          <span>See WFH Policy</span>
+        </button>
+      </div>
 
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>Request WFH</h2>
           <span className={styles.cardSubheading}>Submit a request for approval</span>
+          
           <div className={styles.cardContent}>
             <WfhRequestForm 
               onSubmitted={handleSubmitted} 
@@ -69,18 +81,6 @@ const UserPage = () => {
             <WfhBalance />
           </div>
         </div>
-      </div>
-
-      <div className={styles.policyBar}>
-        <button
-          type="button"
-          className={styles.policyButtonRight}
-          onClick={() => setShowPolicy(true)}
-          title="Work From Home Policy"
-        >
-          <FiInfo className={styles.policyButtonIcon} />
-          <span>See WFH Policy</span>
-        </button>
       </div>
 
       {showPolicy && (
@@ -304,7 +304,7 @@ export const WfhBalance = () => {
           label={
             <span>
               Weekly Balance 
-              <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '4px' }}>
+              <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px' }}>
                 ({weekLabel})
               </span>
             </span>

@@ -14,7 +14,7 @@
   gap: 24px;
   align-items: stretch;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   max-width: calc(100vw - 350px);
   max-height: 480px;
 }
@@ -25,7 +25,7 @@
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border: 1px solid var(--surface-border);
   border-radius: 16px;
-  padding: 24px;
+  padding: 15px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
   width: 100%;
   min-width: 0;
@@ -149,21 +149,45 @@
   list-style-type: none;
   padding: 0;
   margin: 0;
+  counter-reset: rule;
 }
 
 .rulesSection li {
-  margin-bottom: 14px;
-  font-size: 14px;
-  line-height: 1.7;
+  counter-increment: rule;
+  position: relative;
+  --li-padding: 12px;
+  --li-font: 14px;
+  --li-line: 1.6;
+  --marker: 18px;
+  margin-bottom: 5px;
+  font-size: var(--li-font);
+  line-height: var(--li-line);
   color: var(--text-secondary);
-  padding: 18px 22px;
+  padding: var(--li-padding) 22px var(--li-padding) 46px;
   background: rgba(248, 250, 252, 0.65);
   border-radius: 14px;
-  transition: all 0.2s ease;
+}
+
+.rulesSection li::before {
+  content: counter(rule);
+  position: absolute;
+  left: 16px;
+  top: calc(var(--li-padding) + ((var(--li-line) * var(--li-font)) - var(--marker)) / 2);
+  width: var(--marker);
+  height: var(--marker);
+  background: rgba(30, 58, 138, 0.1);
+  color: #1e3a8a;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
 }
 
 .rulesSection li:hover {
-  background: rgba(241, 245, 249, 0.85);
+  background: rgba(231, 239, 247, 0.85);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
@@ -208,6 +232,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  /* padding-bottom: 8px; */
 }
 
 .donutWrapper {
@@ -215,7 +240,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
   border-radius: 16px;
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -263,7 +288,7 @@
 
 .donutValue {
   fill: var(--blue);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   transition: fill 0.3s ease;
@@ -277,20 +302,20 @@
 
 .donutUnit {
   fill: #64748b;
-  font-size: 8px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1;
+  padding-top: 10px;
 }
 
 .donutLabel {
   font-size: 13px;
-  font-weight: 600;
   color: #1e293b;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   letter-spacing: -0.01em;
+  padding-top: 5px;
 }
 
 .donutMeta {
@@ -303,7 +328,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-top: 6px;
+  padding-top: 8px;
   border-top: 1px solid rgba(31, 60, 136, 0.08);
 }
 
@@ -324,7 +349,7 @@
 .holidayCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* gap: 10px; */
   padding: 10px;
   background: #ffffff;
   border: 1px solid rgba(31, 60, 136, 0.08);
@@ -394,8 +419,8 @@
 
 .donutChartContainer {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -425,40 +450,42 @@
   border-radius: 6px;
   font-weight: 600;
   font-size: 0.95em;
+}
 
 .pageTitle {
   margin: 0;
-}
-
-/* Policy trigger button below cards */
-.policyBar {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  max-width: calc(100vw - 350px);
-  padding-right: 16px;
-  margin-bottom: 24px;
 }
 
 .policyButtonRight {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 8px 18px;
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.2);
-  color: var(--blue);
-  border-radius: 10px;
+  color: #1e3a8a;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
-
+ 
+.policyButtonRight::after {
+  content: '→';
+  margin-left: 4px;
+  transition: transform 0.2s ease;
+}
+ 
 .policyButtonRight:hover {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.35);
+}
+ 
+.policyButtonRight:hover::after {
+  transform: translateX(3px);
 }
 
 .policyButtonIcon {
@@ -497,7 +524,7 @@
 
 .policyModalTop {
   height: 5px;
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%);
+  background: linear-gradient(90deg, #172554 0%, #1e3a8a 50%, #1e3a8a 100%);
   width: 100%;
   flex-shrink: 0;
 }
@@ -624,4 +651,17 @@
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: calc(100vw - 350px);
+  margin-bottom: 12px;
 }
+ 
+.pageTitle {
+  margin: 0;
+}
+ 
