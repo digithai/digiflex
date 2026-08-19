@@ -152,7 +152,6 @@ const UserPage = () => {
                 Got it, thanks
               </button>
             </div>
-
           </div>
         </div>
       )}
