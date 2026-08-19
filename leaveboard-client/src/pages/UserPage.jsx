@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import WfhRequestForm from '../components/WfhRequestForm';
 import UserCalendar from '../components/UserCalendar';
 import WFHRules from '../components/WFHRules';
+import { FiInfo, FiX, FiFileText } from 'react-icons/fi';
 import styles from '../styles/MainPage.module.css';
 import { useHolidays } from '../hooks/useHolidays';
 import { useWfhSettings } from '../hooks/useWfhSettings';
@@ -70,13 +71,15 @@ const UserPage = () => {
         </div>
       </div>
 
-      <div className={styles.policyFooterBar}>
+      <div className={styles.policyBar}>
         <button
           type="button"
-          className={styles.policyLink}
+          className={styles.policyButtonRight}
           onClick={() => setShowPolicy(true)}
+          title="Work From Home Policy"
         >
-          View Work From Home Policy →
+          <FiInfo className={styles.policyButtonIcon} />
+          <span>See WFH Policy</span>
         </button>
       </div>
 
@@ -91,19 +94,32 @@ const UserPage = () => {
             className={styles.policyModal}
             onClick={(e) => e.stopPropagation()}
           >
+            <div className={styles.policyModalTop} />
             <div className={styles.policyModalHeader}>
-              <h2 className={styles.policyModalTitle}>Work From Home Policy</h2>
+              <div className={styles.policyModalTitleGroup}>
+                <FiFileText className={styles.policyModalTitleIcon} />
+                <h2 className={styles.policyModalTitle}>Work From Home Policy</h2>
+              </div>
               <button
                 type="button"
                 className={styles.policyModalClose}
                 onClick={() => setShowPolicy(false)}
                 aria-label="Close policy"
               >
-                ✕
+                <FiX />
               </button>
             </div>
             <div className={styles.policyModalContent}>
               <WFHRules />
+            </div>
+            <div className={styles.policyModalFooter}>
+              <button
+                type="button"
+                className={styles.policyModalFooterButton}
+                onClick={() => setShowPolicy(false)}
+              >
+                Got it, thanks
+              </button>
             </div>
           </div>
         </div>
