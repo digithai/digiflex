@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     },
     wfhAnnualBalance: {
         type: Number,
-        default: 0,
+        default: 30,
         min: 0
     }
 }, 

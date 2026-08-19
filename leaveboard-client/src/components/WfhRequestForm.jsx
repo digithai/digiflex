@@ -176,7 +176,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
   // Calculate holiday adjustment for target week
   useEffect(() => {
-    if (targetWeek && holidays.length > 0 && user) {
+    if (targetWeek && user) {
       const { start: weekStart, end: weekEnd } = targetWeek;
       const holidaysInWeek = holidays.filter((h) => {
         if (!h?.date) return false;
@@ -189,7 +189,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       const weekLabel = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
       
       setHolidayAdjustmentData({ holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays });
-
     }
   }, [targetWeek, holidays, user]);
 
@@ -320,7 +319,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          {/* <span><strong className={styles.holidayAdjustmentLabel}>Public Holiday Adjustment:</strong> {holidayAdjustmentMessage}</span> */}
             
             {holidayAdjustmentData && (
               <span>

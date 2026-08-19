@@ -292,6 +292,15 @@ export const approveRequest = async (req, res) => {
     request.approvedByEmail = req.user.email;
     await request.save();
 
+    // Reduce the requester's annual WFH balance by 1 for WFH requests
+    // Only decrement if the current balance is greater than 0
+    if (request.type === 'wfh' && request.user) {
+      await User.findOneAndUpdate(
+        { _id: request.user._id, wfhAnnualBalance: { $gt: 0 } },
+        { $inc: { wfhAnnualBalance: -1 } }
+      );
+    }
+
     // Sync to Google Calendar for WFH requests
     if (request.type === 'wfh' && googleCalendarConfig.enabled) {
       try {

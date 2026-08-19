@@ -196,7 +196,9 @@ const DonutChart = ({ total, remaining, label }) => {
         <canvas ref={chartRef} />
         <div className={styles.donutCenterText}>
           <div className={styles.donutValue}>{remaining}</div>
-          <div className={styles.donutUnit}>days left</div>
+          <div className={styles.donutUnit}>
+            {remaining === 1 ? 'day' : 'days'} left
+          </div>
         </div>
       </div>
       <div className={styles.donutLabel}>{label}</div>
