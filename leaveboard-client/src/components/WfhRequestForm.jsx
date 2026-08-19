@@ -310,7 +310,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
         {datePickerBasedOnRequestType()}
 
-        <button type="submit" disabled={blocked || submitting} style={{ backgroundColor: (blocked || submitting) ? '#ccc' : undefined, cursor: (blocked || submitting) ? 'not-allowed' : 'pointer' }}>
+        <button type="submit" disabled={blocked || submitting} className={styles.submitButton}>
           Submit Request
         </button>
 

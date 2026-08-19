@@ -49,9 +49,10 @@
   box-shadow: 0 0 0 3px rgba(31, 60, 136, 0.1);
 }
 
+.wfhRequestForm .submitButton,
 .wfhRequestForm button[type="submit"] {
   padding: 12px 20px;
-  background-color: var(--green);
+  background-color: #1e3a8a;
   color: #fff;
   border: none;
   cursor: pointer;
@@ -60,17 +61,18 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   transition: all 0.2s ease;
-  margin-top: 8px;
   width: 100%;
 }
 
+.wfhRequestForm .submitButton:hover:not(:disabled),
 .wfhRequestForm button[type="submit"]:hover:not(:disabled) {
-  background-color: #15803d;
+  background-color: #172554;
   transform: translateY(-1px);
 }
 
+.wfhRequestForm .submitButton:disabled,
 .wfhRequestForm button[type="submit"]:disabled {
-  background-color: #cbd5e1;
+  background-color: rgba(30, 58, 138, 0.45);
   cursor: not-allowed;
   transform: none;
 }
@@ -85,15 +87,15 @@
 .wfhRequestForm .holidayAdjustment {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 5px;
   width: 100%;
   margin: 0;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: #ffffff;
   border: 1px solid rgba(31, 60, 136, 0.18);
   border-radius: 12px;
   color: var(--blue);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   box-shadow: 0 1px 3px rgba(31, 60, 136, 0.06);
 }

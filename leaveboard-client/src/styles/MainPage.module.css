@@ -16,7 +16,7 @@
   width: 100%;
   margin-bottom: 24px;
   max-width: calc(100vw - 350px);
-  max-height: 440px;
+  max-height: 480px;
 }
 
 .card {
@@ -328,7 +328,7 @@
 .holidayCard {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   padding: 10px;
   background: #ffffff;
   border: 1px solid rgba(31, 60, 136, 0.08);
@@ -417,4 +417,16 @@
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
+}
+
+
+/* WFH Policy */
+.ruleHighlight {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95em;
 }
