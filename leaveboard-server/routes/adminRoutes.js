@@ -70,27 +70,29 @@ router.put('/users/:id/password', protect, tenantAdminOnly, async (req, res) => 
   }
 });
 
-// Update user's wfhWeekly
-router.put('/users/:id/wfhWeekly', protect, tenantAdminOnly, async (req, res) => {
-  try {
-    const { wfhWeekly } = req.body;
-    const num = Number(wfhWeekly);
+// Update numeric WFH-related fields on the user - WFH weekly, annual quota, and balance
+['wfhWeekly', 'wfhAnnualQuota', 'wfhAnnualBalance'].forEach((field) => {
+  router.put(`/users/:id/${field}`, protect, tenantAdminOnly, async (req, res) => {
+    try {
+      const raw = req.body[field];
+      const num = Number(raw);
 
-    if (Number.isNaN(num) || num < 0) {
-      return res.status(400).json({ message: 'wfhWeekly must be a non-negative number' });
+      if (Number.isNaN(num) || num < 0) {
+        return res.status(400).json({ message: `${field} must be a non-negative number` });
+      }
+
+      const user = await User.findOne({ _id: req.params.id, tenant: req.user.tenant._id });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      user[field] = num;
+      await user.save();
+
+      res.json({ message: `${field} updated successfully`, [field]: user[field] });
+    } catch (err) {
+      console.error(`Error updating ${field}:`, err);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    const user = await User.findOne({ _id: req.params.id, tenant: req.user.tenant._id });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    user.wfhWeekly = num;
-    await user.save();
-
-    res.json({ message: 'wfhWeekly updated successfully', wfhWeekly: user.wfhWeekly });
-  } catch (err) {
-    console.error('Error updating wfhWeekly:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
+  });
 });
 
 // Update user's role

@@ -186,9 +186,11 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
       const baseMaxDays = user.wfhWeekly || 1;
       const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
+      const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
+      const usableDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
       const weekLabel = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
-      
-      setHolidayAdjustmentData({ holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays });
+
+      setHolidayAdjustmentData({ holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays, usableDays, wfhAnnualBalance });
     }
   }, [targetWeek, holidays, user]);
 
@@ -268,7 +270,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
       setMessage(res.data.message);
       if (typeof onSubmitted === 'function') onSubmitted();
-      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       setMessage(err.response?.data?.message || 'Error submitting request.');
       setSubmitting(false);
@@ -295,7 +296,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       {/* show weekly quota */}
       <div className={styles.quotaDisplay}>
         <span className={styles.quotaLabel}>Weekly quota:</span>
-        <span className={styles.quotaValue}>{user.wfhWeekly || 1} day(s) / week</span>
+        <span className={styles.quotaValue}>{Number(user?.wfhWeekly) || 0} day(s) / week</span>
       </div>
 
       {/* wfh request form */}
@@ -322,26 +323,52 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
             
             {holidayAdjustmentData && (
               <span>
-                <strong className={styles.holidayAdjustmentLabel}>Public Holiday Adjustment: </strong>
-                {holidayAdjustmentData.holidaysInWeek > 0 
-                  ? (
+                <strong className={styles.holidayAdjustmentLabel}>WFH Adjustment: </strong>
+                {(() => {
+                  const { holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays, usableDays, wfhAnnualBalance } = holidayAdjustmentData;
+
+                  // Case 1: Both holiday and annual cap
+                  if (holidaysInWeek > 0 && usableDays < effectiveMaxDays) {
+                    return (
+                      <>
+                        There {holidaysInWeek === 1 ? 'is' : 'are'} {holidaysInWeek} public
+                        holiday{holidaysInWeek === 1 ? '' : 's'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>.
+                        Your weekly quota is reduced from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'} due to holidays,
+                        and further capped to {usableDays} day{usableDays === 1 ? '' : '(s)'} by your annual balance.
+                      </>
+                    );
+                  }
+                  // Case 2: Holiday adjustment only
+                  if (holidaysInWeek > 0) {
+                    return (
+                      <>
+                        There {holidaysInWeek === 1 ? 'is' : 'are'} {holidaysInWeek} public
+                        holiday{holidaysInWeek === 1 ? '' : 's'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>, automatically adjusting your
+                        WFH allowance from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'}.
+                      </>
+                    );
+                  }
+                  // Case 3: Annual cap only
+                  if (usableDays < baseMaxDays) {
+                    return (
+                      <>
+                        Your weekly quota is {baseMaxDays} day{baseMaxDays === 1 ? '' : '(s)'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>,
+                        but capped to {usableDays} day{usableDays === 1 ? '' : '(s)'} by your annual balance.
+                      </>
+                    );
+                  }
+                  // Case 4: No adjustment
+                  return (
                     <>
-                      There {holidayAdjustmentData.holidaysInWeek === 1 ? 'is' : 'are'} {holidayAdjustmentData.holidaysInWeek} public 
-                      holiday{holidayAdjustmentData.holidaysInWeek === 1 ? '' : 's'} for the week 
-                      <span className={styles.holidayAway}>({holidayAdjustmentData.weekLabel})</span>, automatically adjusting your 
-                      WFH allowance from 
-                      <span className={styles.holidayAway}>{holidayAdjustmentData.baseMaxDays}</span> to 
-                      <span className={styles.holidayAway}>{holidayAdjustmentData.effectiveMaxDays}</span> day.
-                      {holidayAdjustmentData.effectiveMaxDays === 1 ? '' : '(s).'}
-                    </>
-                  )
-                  : (
-                    <>
-                      No public holidays for the week 
-                      <span className={styles.holidayAway}>({holidayAdjustmentData.weekLabel})</span>. 
+                      No public holidays for the week
+                      <span className={styles.holidayAway}>({weekLabel})</span>.
                       No adjustment needed.
                     </>
-                  )}
+                  );
+                })()}
               </span>
             )}
         

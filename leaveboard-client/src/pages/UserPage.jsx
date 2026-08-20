@@ -9,8 +9,12 @@ import { useWfhSettings } from '../hooks/useWfhSettings';
 import { useSelector } from 'react-redux';
 import { getTargetWeek, getWeekLabel } from '../utils/dateUtils';
 import Chart from 'chart.js/auto';
+import { useDispatch } from 'react-redux';
+import { updateUser } from '../features/auth/authSlice';
 
 const UserPage = () => {
+  const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
@@ -28,6 +32,30 @@ const UserPage = () => {
     const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
     setShowScrollHint(isScrollable && !isAtBottom);
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch user');
+        }
+        const data = await res.json();
+        dispatch(updateUser(data));
+      }
+      catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    if (token) {
+      fetchUser();
+    }
+  }, [token, refreshKey, dispatch]);
 
   useEffect(() => {
     checkScrollHint();
@@ -133,9 +161,11 @@ const UserPage = () => {
 const DonutChart = ({ total, remaining, label }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
-  
-  const percentage = total > 0 ? (remaining / total) * 100 : 0;
-  const used = total - remaining;
+
+  // Coerce to numbers and clamp remaining so it never exceeds total
+  const totalNum = Number.isFinite(Number(total)) ? Number(total) : 0;
+  const remainingNum = Math.max(0, Math.min(totalNum, Number.isFinite(Number(remaining)) ? Number(remaining) : 0));
+  const used = totalNum - remainingNum;
 
   useEffect(() => {
     if (chartRef.current) {
@@ -145,20 +175,19 @@ const DonutChart = ({ total, remaining, label }) => {
       }
 
       const blueColor = getComputedStyle(document.documentElement).getPropertyValue('--blue').trim() || '#3b82f6';
- 
 
       // Create new chart
       const ctx = chartRef.current.getContext('2d');
+      const hasQuota = totalNum > 0;
       chartInstance.current = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Remaining', 'Used'],
+          labels: hasQuota ? ['Remaining', 'Used'] : ['No quota'],
           datasets: [{
-            data: [remaining, used],
-            backgroundColor: [
-              blueColor,
-              '#e2e8f0'
-            ],
+            data: hasQuota ? [remainingNum, used] : [1],
+            backgroundColor: hasQuota
+              ? [blueColor, '#e2e8f0']
+              : ['#e2e8f0'],
             borderWidth: 0,
             cutout: '70%' // This creates the donut hole
           }]
@@ -195,17 +224,17 @@ const DonutChart = ({ total, remaining, label }) => {
       <div className={styles.donutChartContainer}>
         <canvas ref={chartRef} />
         <div className={styles.donutCenterText}>
-          <div className={styles.donutValue}>{remaining}</div>
+          <div className={styles.donutValue}>{remainingNum}</div>
           <div className={styles.donutUnit}>
-            {remaining === 1 ? 'day' : 'days'} left
+            {remainingNum <= 1 ? 'day' : 'days'} left
           </div>
         </div>
       </div>
       <div className={styles.donutLabel}>{label}</div>
-      {used < total ? (
-        <div className={styles.donutMeta}>{used} / {total} used</div>
+      {used < totalNum ? (
+        <div className={styles.donutMeta}>{used} / {totalNum} used</div>
       ) : (
-        <div className={styles.donutMeta}>{total} / {total} used</div>
+        <div className={styles.donutMeta}>{totalNum} / {totalNum} used</div>
       )}
     </div>
   );
@@ -216,9 +245,9 @@ export const WfhBalance = () => {
   const { settings } = useWfhSettings();
   const { token, user } = useSelector(state => state.auth);
   
-  const weeklyQuota = user.wfhWeekly || 2;
-  const totalQuota = user.wfhAnnualQuota || 30;
-  const wfhAnnualBalance = user.wfhAnnualBalance || 30;
+  const weeklyQuota = Number(user?.wfhWeekly) || 0;
+  const totalQuota = Number(user?.wfhAnnualQuota) || 0;
+  const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
 
   // Use shared utility functions
   const { start: weekStart, end: weekEnd } = getTargetWeek(settings);
@@ -277,7 +306,13 @@ export const WfhBalance = () => {
     return holidayDate >= new Date(weekStart) && holidayDate <= new Date(weekEnd);
   }).length;
   
-  const weeklyRemaining = Math.max(0, weeklyQuota - weeklyUsed - holidaysInWeek);
+  const weeklyRemaining = Math.max(
+    0, 
+    Math.min(wfhAnnualBalance, weeklyQuota - weeklyUsed - holidaysInWeek)
+  );
+
+  // effective weekly total after capped with annual balance
+  const effectiveWeeklyTotal = weeklyUsed + weeklyRemaining;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -301,7 +336,7 @@ export const WfhBalance = () => {
     <div className={styles.wfhBalance}>
       <div className={styles.donutGrid}>
         <DonutChart 
-          total={weeklyQuota} 
+          total={effectiveWeeklyTotal} 
           remaining={weeklyRemaining} 
           label={
             <span>

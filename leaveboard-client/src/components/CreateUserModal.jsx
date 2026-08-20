@@ -75,6 +75,8 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated, token }) => {
                 password: '',
                 role: '',
                 position: '',
+                wfhAnnualQuota: '',
+                wfhAnnualBalance: '',
                 wfhWeekly: '',
                 leaveCounts: {
                     sickLeave: '',
@@ -145,6 +147,22 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated, token }) => {
                 <option key={position} value={position}>{position}</option>
               ))}
             </select>
+
+            <input
+              type="number"
+              name="wfhAnnualQuota"
+              placeholder="Annual WFH quota"
+              value={formData.wfhAnnualQuota}
+              onChange={handleChange}
+            />
+
+            <input
+              type="number"
+              name="wfhAnnualBalance"
+              placeholder="Annual WFH balance"
+              value={formData.wfhAnnualBalance}
+              onChange={handleChange}
+            />
 
             {/* Numeric Inputs */}
             <input
