@@ -349,7 +349,7 @@ router.get('/me', protect, async (req, res) => {
     res.json(user);
   }
   catch (err) {
-    console.error('Error fetching /me:', err);
+    console.error('Error fetching current user:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

@@ -351,7 +351,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
                     );
                   }
                   // Case 3: Annual cap only
-                  if (usableDays < baseMaxDays) {
+                  if (holidaysInWeek === 0 && usableDays < baseMaxDays) {
                     return (
                       <>
                         Your weekly quota is {baseMaxDays} day{baseMaxDays === 1 ? '' : '(s)'} for the week
