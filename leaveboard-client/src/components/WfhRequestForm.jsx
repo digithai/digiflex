@@ -167,7 +167,12 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       } else if (limitBlocked) {
         setMessage(`You have reached your weekly WFH limit (${maxDays}). Total this week: ${countsForWeek.all}.`);
       } else {
-        setMessage(null);
+        // Don't clear success messages
+        if (message && (message.includes('success') || message.includes('submitted'))) {
+          // Keep success message
+        } else {
+          setMessage(null);
+        }
       }
     } else {
       setBlocked(false);
