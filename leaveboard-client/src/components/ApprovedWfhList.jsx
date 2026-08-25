@@ -189,6 +189,7 @@ const today = formatDateLocal(new Date());
                     onChange={(d) => setSelectedDate(d ? format(d, 'yyyy-MM-dd') : '')}
                     dateFormat="yyyy-MM-dd"
                     customInput={<CustomDateInput />}
+                    showPopperArrow={false}
                     fixedHeight
                   />
                 </div>

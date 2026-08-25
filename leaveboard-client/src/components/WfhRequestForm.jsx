@@ -27,6 +27,8 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const [selectedDateInfo, setSelectedDateInfo] = useState(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const datePickerRef = useRef(null);
+  const [autoDismissMessage, setAutoDismissMessage] = useState(null);
+  const timerRef = useRef(null);
 
   const url = `${import.meta.env.VITE_BASE_URL}/api/wfh/request`;
   const approvedUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approved`;
@@ -88,7 +90,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       const today = new Date();
       const curMon = startOfWeek(today, { weekStartsOn: 1 });
       return {
-        minMonday: curMon,
+        minMonday: today,
         minFriday: addDays(curMon, 4),
         minSunday: addDays(curMon, 6),
       };
@@ -103,8 +105,40 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         minSunday: addDays(nextMon, 6),
       };
     }
-    
   }, [weekScope]);
+
+  useEffect(() => {
+    if (message) {
+      setAutoDismissMessage(message);
+      
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
+      // Set new timer
+      timerRef.current = setTimeout(() => {
+        console.log("Timer expired, clearing message");
+        setAutoDismissMessage(null);
+        timerRef.current = null;
+      }, 5000);
+      
+      return () => {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+      };
+    }
+  }, [message]);
+
+  const getMessageType = (msg) => {
+    if (!msg) return 'error';
+    if (msg.includes('success') || msg.includes('submitted')) return 'success';
+    if (msg.includes('error') || msg.includes('failed')) return 'error';
+    return 'error';
+  };
+
+  const messageType = getMessageType(autoDismissMessage);
 
   const formatDateKey = (d) => {
     const year = d.getFullYear();
@@ -288,6 +322,23 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     const dayOfWeek = d.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const time = new Date(d).setHours(0, 0, 0, 0);
+
+    // Check if date is outside the allowed range
+    if (d === minMonday) {
+      return {
+        selectable: false,
+        type: 'today',
+        label: 'Today',
+      };
+    }
+
+    if (d < minMonday || d > minSunday) {
+      return {
+        selectable: false,
+        type: 'outside_range',
+        label: 'Outside allowed date range',
+      };
+    }
 
     // Calculate week boundaries based on scope (tenant's settings)
     let weekStart, weekEnd;
@@ -650,10 +701,34 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     return 'top';
   };
 
+  const showAutoDismissMessage = (msg) => {
+    setAutoDismissMessage(msg);
+    
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    // Set new timer
+    timerRef.current = setTimeout(() => {
+      setAutoDismissMessage(null);
+      timerRef.current = null;
+    }, 5000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    setMessage(null);
+    // Check if date is selected first
+    if (!date) {
+      setMessage('Please select a date');
+      showAutoDismissMessage('Please select a date'); 
+      setSubmitting(false);
+      return;
+    }
+      
     // Client-side check for weekly WFH limit (server also enforces)
     if (type === 'wfh' && user && date) {
       const { start, end } = getWeekBounds(date);
@@ -709,6 +784,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       });
 
       setMessage(res.data.message);
+      console.log("Message set to:", res.data.message);
       setSubmitting(false);
 
       // Refresh data after successful submission
@@ -726,6 +802,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       if (typeof onSubmitted === 'function') onSubmitted();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Error submitting request.');
+      console.log("Setting error message:", err.response?.data?.message);
       setSubmitting(false);
     }
   };
@@ -952,7 +1029,16 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         
         </div>
 
-        {message && <p >{message}</p>}
+        {autoDismissMessage && (
+          <div className={`${styles.messageCard} ${styles[`message${messageType.charAt(0).toUpperCase() + messageType.slice(1)}`]}`}>
+            <div className={styles.messageIcon}>
+              {messageType === 'success' && '✅'}
+              {messageType === 'error' && '❌'}
+              {messageType === 'info' && 'ℹ️'}
+            </div>
+            <span className={styles.messageText}>{autoDismissMessage}</span>
+          </div>
+        )}
       </form>
     </SectionWrap>
   );
