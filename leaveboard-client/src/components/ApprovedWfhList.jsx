@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchApprovedRequests } from '../app/approvalsSlice';
 import ApprovedCard from './ApprovedCard';
@@ -6,8 +6,28 @@ import axios from 'axios';
 import UserCalendar from './UserCalendar';
 import styles from '../styles/ApprovedWfhList.module.css';
 import { getRoleLabel } from '../utils/roleLabels.js';
+import DatePicker from 'react-datepicker';
+import { format, parseISO } from 'date-fns';
 
 const API = `${import.meta.env.VITE_BASE_URL}/api/wfh`;
+
+const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    onClick={(e) => {
+      if (onClick) onClick(e);
+    }}
+    className={styles.modalInput}
+  >
+    <span className={styles.datePickerLabel}>
+      {value
+        ? format(parseISO(value), 'EEE, d MMM yyyy')
+        : 'Select date'}
+    </span>
+    <span className={styles.datePickerIcon}>📅 ▼</span>
+  </button>
+));
 
 // Example values
 const formatDateLocal = (date) => {
@@ -163,12 +183,15 @@ const today = formatDateLocal(new Date());
                 </select>
 
                 <label style={{ display: 'block', marginBottom: 6 }}>Date</label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className={styles.modalInput}
-                />
+                <div className={styles.datePickerWrapper}>
+                  <DatePicker
+                    selected={selectedDate ? parseISO(selectedDate) : null}
+                    onChange={(d) => setSelectedDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                    dateFormat="yyyy-MM-dd"
+                    customInput={<CustomDateInput />}
+                    fixedHeight
+                  />
+                </div>
 
                 <div className={styles.modalActions}>
                   <button

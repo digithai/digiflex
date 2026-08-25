@@ -107,7 +107,7 @@ const UserPage = () => {
           <h2 className={styles.cardHeading}>WFH Balance</h2>
           <span className={styles.cardSubheading}>Quota and upcoming holidays</span>
           <div className={styles.cardContent}>
-            <WfhBalance />
+            <WfhBalance refreshKey={refreshKey} />
           </div>
         </div>
       </div>
@@ -245,7 +245,7 @@ const DonutChart = ({ total, remaining, label }) => {
   );
 };
 
-export const WfhBalance = () => {
+export const WfhBalance = ({ refreshKey }) => {
   const { holidays } = useHolidays();
   const { settings } = useWfhSettings();
   const { token, user } = useSelector(state => state.auth);
@@ -260,6 +260,8 @@ export const WfhBalance = () => {
 
   // get weekly wfh used from API
   const [approvedWFH, setApprovedWFH] = useState([]);
+  const [pendingWFH, setPendingWFH] = useState([]);
+
   useEffect(() => {
     const fetchApprovedRequests = async() => {
       try{
@@ -281,8 +283,32 @@ export const WfhBalance = () => {
     if (token) {
       fetchApprovedRequests();
     }
-  }, [token]);
-  const weeklyUsed = approvedWFH.filter(request => {
+  }, [token, refreshKey]);
+
+  useEffect(() => {
+    const fetchApprovalRequests = async() => {
+      try{
+        const approvalUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approvals`;
+        const response = await fetch(approvalUrl, {
+          headers: { Authorization: `Bearer ${token}`}
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPendingWFH(data || []);
+        }
+      } 
+      catch (error) {
+        setPendingWFH([]);
+      }
+    };
+
+    if (token) {
+      fetchApprovalRequests();
+    }
+  }, [token, refreshKey]);
+
+  const weeklyApproved = approvedWFH.filter(request => {
     if (!request.user) return false;
 
     const userId = user._id || user.id;
@@ -303,6 +329,30 @@ export const WfhBalance = () => {
     return normalizedReqDate >= normalizedStart && normalizedReqDate <= normalizedEnd && 
          request.type === 'wfh' && request.status === 'approved';
   }).length;
+
+  const weeklyPending = pendingWFH.filter(request => {
+    if (!request.user) return false;
+
+    const userId = user._id || user.id;
+    const requestId = request.user._id || request.user.id; 
+
+    if (requestId !== userId) return false; // Filter by current user
+    
+    const reqDate = new Date(request.date);
+    const normalizedReqDate = new Date(reqDate);
+    normalizedReqDate.setHours(0, 0, 0, 0);
+
+    const normalizedStart = new Date(weekStart);
+    normalizedStart.setHours(0, 0, 0, 0);
+
+    const normalizedEnd = new Date(weekEnd);
+    normalizedEnd.setHours(23, 59, 59, 999);
+
+    return normalizedReqDate >= normalizedStart && normalizedReqDate <= normalizedEnd && 
+         request.type === 'wfh' && request.status === 'pending';
+  }).length;
+
+  const weeklyUsed = weeklyApproved + weeklyPending;
 
   // Calculate holidays in the current week
   const holidaysInWeek = holidays.filter(h => {

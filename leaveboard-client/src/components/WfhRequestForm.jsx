@@ -35,6 +35,42 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
   const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
+   // Fetch WFH settings so we can respect dynamic disallowed weekdays client-side
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axios.get(settingsUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const settings = res.data || null;
+
+        if (settings && settings.allowedDateScopes){
+          setAllowedDateScopes(settings.allowedDateScopes);
+        }
+
+        const serverDisallowed =
+          settings && Array.isArray(settings.disallowedWeekdays) && settings.disallowedWeekdays.length
+            ? settings.disallowedWeekdays
+            : [1, 5, 0, 6];
+        setDisallowedWeekdays(serverDisallowed.map((n) => Number(n)));
+        if (settings && settings.positionConcurrency) {
+          setPositionConcurrency(settings.positionConcurrency);
+        }
+      } catch (_) {
+        setDisallowedWeekdays([1, 5, 0, 6]);
+      }
+    };
+    if (token) fetchSettings();
+  }, [settingsUrl, token]);
+
+  // const weekScope = tenantSettings?.wfhScope || 'next';
+  const weekScope = useMemo(() => {
+    if (!allowedDateScopes) return 'next'; // default
+    if (allowedDateScopes.thisWeek) return 'this';
+    if (allowedDateScopes.nextWeek) return 'next';
+    return 'next'; // default
+  }, [allowedDateScopes]);
+
   // Calculate "Next Week" boundaries for WFH scope
   const { nextWeekMonday, nextWeekFriday, nextWeekSunday } = useMemo(() => {
     const today = new Date();
@@ -46,6 +82,29 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       nextWeekSunday: addDays(nextMon, 6),
     };
   }, []);
+
+  const { minMonday, minFriday, minSunday } = useMemo(() => {
+    if (weekScope === 'this') {
+      const today = new Date();
+      const curMon = startOfWeek(today, { weekStartsOn: 1 });
+      return {
+        minMonday: curMon,
+        minFriday: addDays(curMon, 4),
+        minSunday: addDays(curMon, 6),
+      };
+    }
+    else{
+      const today = new Date();
+      const curMon = startOfWeek(today, { weekStartsOn: 1 });
+      const nextMon = addDays(curMon, 7);
+      return {
+        minMonday: nextMon,
+        minFriday: addDays(nextMon, 4),
+        minSunday: addDays(nextMon, 6),
+      };
+    }
+    
+  }, [weekScope]);
 
   const formatDateKey = (d) => {
     const year = d.getFullYear();
@@ -94,34 +153,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     };
     if (token) fetchHolidays();
   }, [holidaysUrl, token]);
-
-  // Fetch WFH settings so we can respect dynamic disallowed weekdays client-side
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await axios.get(settingsUrl, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const settings = res.data || null;
-
-        if (settings && settings.allowedDateScopes){
-          setAllowedDateScopes(settings.allowedDateScopes);
-        }
-
-        const serverDisallowed =
-          settings && Array.isArray(settings.disallowedWeekdays) && settings.disallowedWeekdays.length
-            ? settings.disallowedWeekdays
-            : [1, 5, 0, 6];
-        setDisallowedWeekdays(serverDisallowed.map((n) => Number(n)));
-        if (settings && settings.positionConcurrency) {
-          setPositionConcurrency(settings.positionConcurrency);
-        }
-      } catch (_) {
-        setDisallowedWeekdays([1, 5, 0, 6]);
-      }
-    };
-    if (token) fetchSettings();
-  }, [settingsUrl, token]);
 
   // Check if WFH is blocked due to holidays or disallowed weekdays
   useEffect(() => {
@@ -372,14 +403,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     return { selectable: true, type: 'eligible', label: 'Eligible for WFH' };
   };
 
-  // const weekScope = tenantSettings?.wfhScope || 'next';
-  const weekScope = useMemo(() => {
-    if (!allowedDateScopes) return 'next'; // default
-    if (allowedDateScopes.thisWeek) return 'this';
-    if (allowedDateScopes.nextWeek) return 'next';
-    return 'next'; // default
-  }, [allowedDateScopes]);
-
   // Handle date hover/click for info panel
   const handleDateHover = useCallback((date) => {
     const status = evaluateDateStatus(date, weekScope);
@@ -471,7 +494,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
             <span className={styles.infoPanelDate}>{dateStr}</span>
           </div>
           <div className={`${styles.infoPanelDetails} ${getStatusColor(status.type)}`}>
-            <strong>{getStatusText(status.type)}</strong>
+            {getStatusText(status.type)}
           </div>
         </>
       );
@@ -723,7 +746,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     >
       <span className={styles.datePickerLabel}>
         {date
-          ? format(parseISO(date), 'EEEE, MMM d, yyyy')
+          ? format(parseISO(date), 'EEE, d MMM yyyy')
           : 'Select WFH date for next week...'}
       </span>
       <span className={styles.datePickerIcon}>📅 ▼</span>
@@ -738,7 +761,11 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         <div className={styles.datePickerWrapper}>
           <DatePicker
             selected={selectedDateObj}
-            onChange={(d) => setDate(d ? format(d, 'yyyy-MM-dd') : '')}
+            onChange={
+              (d) => {
+                setDate(d ? format(d, 'yyyy-MM-dd') : '')
+              }
+            }
             filterDate={isDateSelectable}
             dayClassName={getDayClassName}
             open={calendarOpen}
@@ -747,11 +774,12 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
               clearDateInfo();
             }}
             onInputClick={() => setCalendarOpen(true)}
-            minDate={nextWeekMonday}
-            maxDate={nextWeekSunday}
+            minDate={minMonday}
+            maxDate={minSunday}
             dateFormat="yyyy-MM-dd"
             customInput={<CustomDateInput />}
             renderDayContents={renderDayContents}
+            fixedHeight
             popperPlacement="bottom-start"
             popperProps={{
               strategy: 'fixed',
@@ -777,16 +805,16 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
                   <span>Available</span>
                 </div>
                 <div className={styles.datePickerLegendItem}>
+                  <span className={`${styles.datePickerLegendDot} ${styles.team_limit_reached}`} />
+                  <span>Team Limit Reached</span>
+                </div>
+                <div className={styles.datePickerLegendItem}>
                   <span className={`${styles.datePickerLegendDot} ${styles.user_requests}`} />
                   <span>Your Requests</span>
                 </div>
                 <div className={styles.datePickerLegendItem}>
-                  <span className={`${styles.datePickerLegendDot} ${styles.team_limit_reached}`} />
-                  <span>Team Capacity Reached</span>
-                </div>
-                <div className={styles.datePickerLegendItem}>
                   <span className={`${styles.datePickerLegendDot} ${styles.team_max_pending}`} />
-                  <span>Team Capacity Warning</span>
+                  <span>Team Limit Warning</span>
                 </div>
                 <div className={styles.datePickerLegendItem}>
                   <span className={`${styles.datePickerLegendDot} ${styles.holiday}`} />
