@@ -37,7 +37,7 @@ const formatDateLocal = (date) => {
          String(d.getDate()).padStart(2, '0');
 };
 
-const ApprovedWfhList = ({ showApprovedList = true }) => {
+const ApprovedWfhList = ({ showApprovedList = true, externalRefreshKey = 0 }) => {
   const dispatch = useDispatch();
   const { approvedRequests, loading, error } = useSelector((state) => state.approvals);
 
@@ -54,8 +54,10 @@ const ApprovedWfhList = ({ showApprovedList = true }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchApprovedRequests());
-  }, [dispatch]);
+    if (externalRefreshKey > 0) {
+      dispatch(fetchApprovedRequests());
+    }
+  }, [dispatch, externalRefreshKey]);
 
   useEffect(() => {
     setRequests(approvedRequests);
@@ -112,7 +114,7 @@ const today = formatDateLocal(new Date());
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <UserCalendar key={refreshKey} />
+        <UserCalendar key={refreshKey || externalRefreshKey} />
       </div>
       {showApprovedList && <h2>Approved WFH Requests</h2>}
 

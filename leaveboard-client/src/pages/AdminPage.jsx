@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import WfhRequestForm from '../components/WfhRequestForm';
 import { WfhBalance } from '../pages/UserPage';
@@ -9,6 +9,8 @@ import { getTargetWeek, getWeekLabel } from '../utils/dateUtils';
 import { updateUser } from '../features/auth/authSlice';
 
 const AdminPage = () => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handleSubmitted = () => setRefreshKey((k) => k + 1);
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
   const { settings } = useWfhSettings();
@@ -41,18 +43,18 @@ const AdminPage = () => {
           <h2 className={styles.cardHeading}>Request WFH</h2>
           <span className={styles.cardSubheading}>Submit a request for approval</span>
           <div className={styles.cardContent}>
-            <WfhRequestForm targetWeek={targetWeek} />
+            <WfhRequestForm targetWeek={targetWeek} onSubmitted={handleSubmitted} />
           </div>
         </div>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>WFH Balance</h2>
           <span className={styles.cardSubheading}>Quota and upcoming holidays</span>
           <div className={styles.cardContent}>
-            <WfhBalance />
+            <WfhBalance refreshKey={refreshKey} />
           </div>
         </div>
       </div>
-      <ApprovedWfhList showApprovedList={false} />
+      <ApprovedWfhList showApprovedList={false} externalRefreshKey={refreshKey} />
     </div>
   );
 };
