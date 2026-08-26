@@ -85,12 +85,13 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     };
   }, []);
 
-  const { minMonday, minFriday, minSunday } = useMemo(() => {
+  // Calulate minimum date for WFH request based on week scope
+  const { minStartDate, minFriday, minSunday } = useMemo(() => {
     if (weekScope === 'this') {
       const today = new Date();
       const curMon = startOfWeek(today, { weekStartsOn: 1 });
       return {
-        minMonday: today,
+        minStartDate: today,
         minFriday: addDays(curMon, 4),
         minSunday: addDays(curMon, 6),
       };
@@ -100,13 +101,14 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       const curMon = startOfWeek(today, { weekStartsOn: 1 });
       const nextMon = addDays(curMon, 7);
       return {
-        minMonday: nextMon,
+        minStartDate: nextMon,
         minFriday: addDays(nextMon, 4),
         minSunday: addDays(nextMon, 6),
       };
     }
   }, [weekScope]);
 
+  // Auto-dismiss message after 5 seconds (after WFH request submit)
   useEffect(() => {
     if (message) {
       setAutoDismissMessage(message);
@@ -270,7 +272,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       }).length;
 
       const baseMaxDays = user.wfhWeekly || 1;
-      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
+      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek); // Adjust weekly max days based on holidays in week
       const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
       const annualCapDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
       
@@ -324,7 +326,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     const time = new Date(d).setHours(0, 0, 0, 0);
 
     // Check if date is outside the allowed range
-    if (d === minMonday) {
+    if (d === minStartDate) {
       return {
         selectable: false,
         type: 'today',
@@ -332,7 +334,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       };
     }
 
-    if (d < minMonday || d > minSunday) {
+    if (d < minStartDate || d > minSunday) {
       return {
         selectable: false,
         type: 'outside_range',
@@ -499,18 +501,18 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         case 'team_limit_reached': return 'Team Limit Reached';
         case 'team_pending_warning':
           if (approved > 0 && pending > 0) {
-            return `${approved} approved, ${pending} pending for your position`;
+            return `${approved} approved, ${pending} pending for your team (${user.position})`;
           }
           else if (approved >= max) {
-            return `Position at capacity (${approved} approved) for your position`;
+            return `Position at capacity (${approved} approved) for your team (${user.position})`;
           }
           else if (pending > 0) {
-            return `${pending} pending for your position`;
+            return `${pending} pending for your team (${user.position})`;
           }
           return 'Team pending';
         case 'max_position_quota':
           if (approved >= max) {
-            return `Position at capacity (${approved} approved) for your position`;
+            return `Position at capacity (${approved} approved) for your team (${user.position})`;
           }
           return 'Team Limit Reached';
         case 'user_approved': return 'Your WFH request is ✓ approved';
@@ -572,22 +574,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     return 'wfh-day-outside-scope';
   }, [weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
-  // Days list for popup footer quick pick
-  const nextWeekDays = useMemo(() => {
-    return [0, 1, 2, 3, 4].map((offset) => {
-      const d = addDays(nextWeekMonday, offset);
-      return {
-        date: d,
-        dayName: format(d, 'EEE'),
-        dayDate: format(d, 'd'),
-        status: evaluateDateStatus(d, weekScope),
-      };
-    });
-  }, [nextWeekMonday, holidays, disallowedWeekdays, positionConcurrency, approved, user, weekScope]);
-
-  // -------------------------------------------------------------
   // Validation on date change
-  // -------------------------------------------------------------
   useEffect(() => {
     if (type === 'wfh' && user && date) {
       const selected = new Date(date);
@@ -680,26 +667,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       </div>
     );
   }, [handleDateHover, handleDateClick, clearDateInfo, weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
-
-  // Calculate optimal tooltip position for calendar dates
-  const getOptimalTooltipPosition = (date) => {
-    const dayOfWeek = date.getDay();
-    const dateKey = formatDateKey(date);
-    
-    // For dates at the edges of the week, adjust position
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return 'bottom'; // Weekend dates - show below
-    }
-    
-    // For first few days of month, show below to avoid header overlap
-    const dayOfMonth = date.getDate();
-    if (dayOfMonth <= 7) {
-      return 'bottom';
-    }
-    
-    // Default position
-    return 'top';
-  };
 
   const showAutoDismissMessage = (msg) => {
     setAutoDismissMessage(msg);
@@ -851,7 +818,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
               clearDateInfo();
             }}
             onInputClick={() => setCalendarOpen(true)}
-            minDate={minMonday}
+            minDate={minStartDate}
             maxDate={minSunday}
             dateFormat="yyyy-MM-dd"
             customInput={<CustomDateInput />}
