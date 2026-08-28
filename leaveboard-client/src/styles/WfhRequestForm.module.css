@@ -25,7 +25,7 @@
 .wfhRequestForm input[type="date"],
 .wfhRequestForm select {
   padding: 12px 14px;
-  border: 1px solid var(--surface-border);
+  border: 1px solid var(--surface-border, #e2e8f0);
   border-radius: var(--button-radius);
   font-size: 14px;
   color: var(--text-primary);
@@ -430,7 +430,7 @@
 }
 
 :global(.react-datepicker__day.wfh-day-holiday) {
-  background: linear-gradient(135deg, #dfd9ee 0%, #d1c3f3 100%) !important;
+  background: linear-gradient(135deg, #e2e0eb 0%, #dbd5ee 100%) !important;
   /* border: 1px solid rgba(139, 92, 246, 0.15) !important; */
   color: #7c3aed !important;
   font-weight: 500 !important;
@@ -438,8 +438,8 @@
 }
 
 :global(.react-datepicker__day.wfh-day-holiday:hover) {
-  background: linear-gradient(135deg, #e2e0e9 0%, #dfd9ee 100%) !important;
-  color: #14532d !important;
+  background: linear-gradient(135deg, #dfd9ee 0%, #d1c3f3 100%) !important;
+  color: #7c3aed !important;
   cursor: not-allowed !important;
 }
 

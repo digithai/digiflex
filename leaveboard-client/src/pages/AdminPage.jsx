@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import WfhRequestForm from '../components/WfhRequestForm';
-import { WfhBalance } from '../pages/UserPage';
+import WfhBalance from '../components/WfhBalance';
 import styles from '../styles/MainPage.module.css';
 import ApprovedWfhList from '../components/ApprovedWfhList';
 import { useWfhSettings } from '../hooks/useWfhSettings';
@@ -15,7 +15,6 @@ const AdminPage = () => {
   const { token } = useSelector((state) => state.auth);
   const { settings } = useWfhSettings();
   const targetWeek = getTargetWeek(settings);
-  const currentWeekLabel = getWeekLabel(targetWeek.start);
 
   useEffect(() => {
     const fetchUser = async () => {

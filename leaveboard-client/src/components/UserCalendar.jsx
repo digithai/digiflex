@@ -11,7 +11,9 @@ const UserCalendar = ({ refreshKey = 0 }) => {
   const [error, setError] = useState(null);
   const token = localStorage.getItem('token');
   const { holidays, loading: holidaysLoading } = useHolidays(refreshKey);
+  const [sortBy, setSortBy] = useState('name'); // 'name' or 'position'
 
+  // Generate 31 rolling dates starting from today
   const getDates = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -24,11 +26,10 @@ const UserCalendar = ({ refreshKey = 0 }) => {
     }
     return dates;
   };
+  const dates = useMemo(() => getDates(), [refreshKey]);
 
-  const dates = useMemo(() => getDates(), []);
   const url = `${import.meta.env.VITE_BASE_URL}/api/calendar`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
-
   const fetchData = useCallback(async () => {
       setLoading(true);
       setError(null);
@@ -70,9 +71,21 @@ const UserCalendar = ({ refreshKey = 0 }) => {
   }, [fetchData, refreshKey]);
 
   const formatDate = (d) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-  const sortedUsers = useMemo(() => [...users].sort((a, b) => a.name.localeCompare(b.name)), [users]);
+
+  // sort users by name or position
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const aValue = sortBy === 'name' ? a.name : (a.position || 'N/A');
+      const bValue = sortBy === 'name' ? b.name : (b.position || 'N/A');
+      
+      const comparison = aValue.localeCompare(bValue);
+      return comparison;
+    });
+  }, [users, sortBy]);
+
   const today = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }), []);
 
+  // get cell content for each user and date
   const getCellContent = (user, date) => {
     const dayStr = formatDate(date);
     const holiday = holidays.find((h) => h?.date === dayStr);
@@ -127,7 +140,7 @@ const UserCalendar = ({ refreshKey = 0 }) => {
       <h2 className={styles.calendarTitle}>Team Work From Home Calendar</h2>
       <span className={styles.calendarSubtitle}>31-day rolling schedule of team attendance, holidays, and pending requests</span>
       
-      {loading && holidaysLoading && (
+      {(loading || holidaysLoading) && (
         <div className={styles.stateMessage}>
           <div className={styles.stateContent}>
             <div className={styles.loadingIcon}>⟳</div>
@@ -150,14 +163,57 @@ const UserCalendar = ({ refreshKey = 0 }) => {
         <>
           <div className={styles.calendarWrapper}>
             <div className={styles.namesColumn}>
-              <div className={styles.columnHeader}>Name</div>
+              <div 
+                className={styles.columnHeader} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  userSelect: 'none',
+                  fontSize: '13px'
+                }}
+              >
+                {/* Option 1: Click to sort by Name (Default) */}
+                <span 
+                  onClick={() => setSortBy('name')}
+                  style={{ 
+                    cursor: 'pointer',
+                    fontWeight: sortBy === 'name' ? 'bold' : 'normal',
+                    textDecoration: sortBy === 'name' ? 'underline' : 'none',
+                    opacity: sortBy === 'name' ? 1 : 0.6
+                  }}
+                >
+                  Name
+                </span>
+
+                <span style={{ opacity: 0.4 }}>/</span>
+
+                {/* Option 2: Click to sort by Team */}
+                <span 
+                  onClick={() => setSortBy('position')}
+                  style={{ 
+                    cursor: 'pointer',
+                    fontWeight: sortBy === 'position' ? 'bold' : 'normal',
+                    textDecoration: sortBy === 'position' ? 'underline' : 'none',
+                    opacity: sortBy === 'position' ? 1 : 0.6
+                  }}
+                >
+                  Team
+                </span>
+              </div>
+
               {sortedUsers.map((user) => (
                 <div key={user._id} className={styles.nameCell}>
-                  <div className={styles.userName}>{user.name}</div>
-                  {user.position && <div className={styles.userPosition} title={user.position}>{user.position}</div>}
+                  <div className={styles.userName}>
+                    {sortBy === 'name' ? user.name : user.position || "N/A"}
+                  </div>
+                  <div className={styles.userPosition} title={user.position || "N/A"}>
+                    {sortBy === 'name' ? user.position || "N/A" : user.name}
+                  </div>
                 </div>
               ))}
             </div>
+
             <div className={styles.dataGrid}>
               <div className={styles.dateHeaders}>
                 {dates.map((date) => {

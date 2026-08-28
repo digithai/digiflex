@@ -229,7 +229,7 @@ export const requestWfh = async (req, res) => {
     // Decrement annual balance if the request is submitted (from user or admin)
     if (newRequest.type === 'wfh' && user) {
       await User.findOneAndUpdate(
-        { _id: user._id, wfhAnnualBalance: { $gt: 0 } },
+        { _id: user._id, tenant: tenantId, wfhAnnualBalance: { $gt: 0 } },
         { $inc: { wfhAnnualBalance: -1 } }
       );
     }
@@ -264,6 +264,32 @@ export const getApprovedRequests = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to fetch approved requests' });
+  }
+};
+
+// get specific user's WFH requests history (approved, pending, rejected)
+export const getUserWfhHistory = async (req, res) => {
+  try {
+    const targetYear = Number(req.query.year) || new Date().getFullYear();
+
+    const startDate = new Date(Date.UTC(targetYear, 0, 1));
+    const endDate = new Date(Date.UTC(targetYear + 1, 0, 1));
+
+    const requests = await WfhRequest.find({
+      ...getTenantQuery(req),
+      user: req.user._id,
+      date: { $gte: startDate, $lt: endDate },
+    })
+      .sort({ date: -1 })
+      .populate('user', 'name email position role');
+
+    res.status(200).json({
+      year: targetYear,
+      requests: requests
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch WFH history' });
   }
 };
 
@@ -351,7 +377,7 @@ export const rejectRequest = async (req, res) => {
     // Refund WFH annual balance if request is rejected
     if (request.type === 'wfh' && request.status === 'rejected') {
       await User.findOneAndUpdate(
-        { _id: request.user },
+        { _id: request.user, tenant: req.user.tenant._id },
         { $inc: { wfhAnnualBalance: 1 } }
       );
     }
@@ -405,7 +431,7 @@ export const deleteRequest = async (req, res) => {
     // Refund WFH annual balance if the approved request is deleted
     if (request.type === 'wfh' && request.status === 'approved') {
       await User.findOneAndUpdate(
-        { _id: request.user },
+        { _id: request.user, tenant: req.user.tenant._id },
         { $inc: { wfhAnnualBalance: 1 } }
       );
     }

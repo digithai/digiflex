@@ -37,7 +37,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
   const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
-   // Fetch WFH settings so we can respect dynamic disallowed weekdays client-side
+  // Fetch WFH settings so we can respect dynamic disallowed weekdays client-side
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -494,32 +494,60 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
     const getStatusText = (type) => {
       const { approved, pending, max } = status.counts || {};
+      
       switch (type) {
-        case 'eligible': return 'Available for WFH';
-        case 'holiday': return `${status.label}`;
-        case 'mon_fri_restricted': return 'Mandatory Office Day';
-        case 'team_limit_reached': return 'Team Limit Reached';
-        case 'team_pending_warning':
+        case 'holiday': 
+          return status.label || 'Public Holiday';
+        case 'mon_fri_restricted': 
+          return 'Mandatory Office Day';
+        case 'team_limit_reached': 
+          return 'Team Limit Reached';
+        case 'user_approved': 
+          return 'Your WFH request is ✓ approved';
+        case 'user_pending': 
+          return 'Your WFH request is ⏳ pending approval';
+        case 'weekend': 
+          return 'Weekend';
+        case 'outside_scope': 
+          return 'Outside Scope';
+        case 'team_pending_warning':{
           if (approved > 0 && pending > 0) {
-            return `${approved} approved, ${pending} pending for your team (${user.position})`;
+            return `${approved} approved, ${pending} pending for ${user.position} team`;
           }
           else if (approved >= max) {
-            return `Position at capacity (${approved} approved) for your team (${user.position})`;
+            return (
+              <span style={{ display: 'inline' }}>
+                <strong style={{ display: 'inline' }}>{user.position}</strong> team limit reached ({approved} approved)
+              </span>
+            )
           }
           else if (pending > 0) {
-            return `${pending} pending for your team (${user.position})`;
+            return (
+              <span style={{ display: 'inline' }}>
+                <strong style={{ display: 'inline' }}>{user.position}</strong> team has {pending} pending {pending === 1 ? 'request' : 'requests'}
+              </span>
+            )
           }
           return 'Team pending';
-        case 'max_position_quota':
+        }
+        case 'max_position_quota':{
           if (approved >= max) {
-            return `Position at capacity (${approved} approved) for your team (${user.position})`;
+            return (
+              <span style={{ display: 'inline' }}>
+                <strong style={{ display: 'inline' }}>{user.position}</strong> team limit reached ({approved} approved)
+              </span>
+            )
           }
           return 'Team Limit Reached';
-        case 'user_approved': return 'Your WFH request is ✓ approved';
-        case 'user_pending': return 'Your WFH request is ⏳ pending approval';
-        case 'weekend': return 'Weekend';
-        case 'outside_scope': return 'Outside Scope';
-        default: return status.label || 'Unknown';
+        }
+        case 'eligible': {
+          const hasNoDaysLeft = holidayAdjustmentData && holidayAdjustmentData.usableDays <= 0;
+          return hasNoDaysLeft
+            ? "Eligible date, but your WFH balance is 0"
+            : 'Available for WFH';
+        }
+        default: 
+          return status.label || 'Unknown';
       }
     };
 
@@ -791,7 +819,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       <span className={styles.datePickerLabel}>
         {date
           ? format(parseISO(date), 'EEE, d MMM yyyy')
-          : 'Select WFH date for next week...'}
+          : `Select WFH date for ${weekScope} week...`}
       </span>
       <span className={styles.datePickerIcon}>📅 ▼</span>
     </button>

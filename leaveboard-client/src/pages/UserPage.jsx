@@ -7,10 +7,12 @@ import styles from '../styles/MainPage.module.css';
 import { useHolidays } from '../hooks/useHolidays';
 import { useWfhSettings } from '../hooks/useWfhSettings';
 import { useSelector } from 'react-redux';
-import { getTargetWeek, getWeekLabel } from '../utils/dateUtils';
+import { getTargetWeek } from '../utils/dateUtils';
 import Chart from 'chart.js/auto';
 import { useDispatch } from 'react-redux';
 import { updateUser } from '../features/auth/authSlice';
+import DonutChart from '../components/DonutChart';
+import WfhBalance from '../components/WfhBalance';
 
 
 const UserPage = () => {
@@ -22,9 +24,7 @@ const UserPage = () => {
   const rulesContentRef = useRef(null);
   const handleSubmitted = () => setRefreshKey((k) => k + 1);
   const { settings } = useWfhSettings();
-  
   const targetWeek = getTargetWeek(settings);
-  const currentWeekLabel = getWeekLabel(targetWeek.start);
 
   const checkScrollHint = () => {
     const el = rulesContentRef.current;
@@ -84,10 +84,10 @@ const UserPage = () => {
           type="button"
           className={styles.policyButtonRight}
           onClick={() => setShowPolicy(true)}
-          title="Work From Home Policy"
+          title="Work From Home Rules"
         >
           <FiInfo className={styles.policyButtonIcon} />
-          <span>See WFH Policy</span>
+          <span>See WFH Rules</span>
         </button>
       </div>
 
@@ -127,7 +127,7 @@ const UserPage = () => {
             <div className={styles.policyModalHeader}>
               <div className={styles.policyModalTitleGroup}>
                 <FiFileText className={styles.policyModalTitleIcon} />
-                <h2 className={styles.policyModalTitle}>Work From Home Policy</h2>
+                <h2 className={styles.policyModalTitle}>Work From Home Rules</h2>
               </div>
 
               <button
@@ -431,5 +431,6 @@ export const WfhBalance = ({ refreshKey }) => {
     </div>
   );
 };
+
 
 export default UserPage;

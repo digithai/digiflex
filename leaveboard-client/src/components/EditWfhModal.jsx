@@ -110,70 +110,101 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
     <div className={styles.backdrop}>
       <div className={styles.modal}>
         <h3>Edit User</h3>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontWeight: 600 }}>{user.name}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>{user.email}</div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Header Info Block */}
+          <div className={styles.userInfo}>
+            <div className={styles.userName}>{user.name}</div>
+            <div className={styles.userEmail}>{user.email}</div>
           </div>
-          <input
-            type="number"
-            name="wfhWeekly"
-            placeholder="Weekly WFH days"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            min={0}
-          />
-          <input
-            type="number"
-            name="wfhAnnualQuota"
-            placeholder="Annual WFH quota"
-            value={wfhAnnualQuota}
-            onChange={(e) => setWfhAnnualQuota(e.target.value)}
-            min={0}
-          />
-          <input
-            type="number"
-            name="wfhAnnualBalance"
-            placeholder="Annual WFH balance"
-            value={wfhAnnualBalance}
-            onChange={(e) => setWfhAnnualBalance(e.target.value)}
-            min={0}
-          />
+
+          {/* Weekly WFH Quota */}
+          <div className={styles.formGroup}>
+            <label htmlFor="wfhWeekly">Weekly WFH Quota</label>
+            <input
+              type="number"
+              name="wfhWeekly"
+              placeholder="e.g. 2"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              min={0}
+            />
+          </div>
+
+          {/* Annual WFH Quota */}
+          <div className={styles.formGroup}>
+            <label htmlFor="wfhAnnualQuota">Annual WFH Quota</label>
+            <input
+              type="number"
+              name="wfhAnnualQuota"
+              placeholder="e.g. 30"
+              value={wfhAnnualQuota}
+              onChange={(e) => setWfhAnnualQuota(e.target.value)}
+              min={0}
+            />
+          </div>
+
+          {/* Annual WFH Balance */}
+          <div className={styles.formGroup}>
+            <label htmlFor="wfhAnnualBalance">Annual WFH Balance</label>
+            <input
+              type="number"
+              name="wfhAnnualBalance"
+              placeholder="e.g. 30"
+              value={wfhAnnualBalance}
+              onChange={(e) => setWfhAnnualBalance(e.target.value)}
+              min={0}
+            />
+          </div>
+
+          {/* User Role */}
           {canChangeRole && currentUser._id !== user._id && (
-            <select
-              name="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              {availableRoles.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+            <div className={styles.formGroup}>
+              <label htmlFor="role">User Role</label>
+              <select
+                name="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                {availableRoles.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
           )}
+
+          {/* Position/Team */}
           {canChangeRole && (
-            <select
-              name="position"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-            >
-              <option value="">No position</option>
-              <option value="Dev">Dev</option>
-              <option value="CEO">CEO</option>
-              <option value="COO">COO</option>
-              <option value="CTO">CTO</option>
-              <option value="HR">HR</option>
-              <option value="QA">QA</option>
-              <option value="PO">PO</option>
-              <option value="Sales">Sales</option>
-            </select>
+            <div className={styles.formGroup}>
+              <label htmlFor="position">Position/Team</label>
+                <select
+                name="position"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+              >
+                <option value="">No position</option>
+                <option value="Dev">Dev</option>
+                <option value="CEO">CEO</option>
+                <option value="COO">COO</option>
+                <option value="CTO">CTO</option>
+                <option value="HR">HR</option>
+                <option value="QA">QA</option>
+                <option value="PO">PO</option>
+                <option value="Sales">Sales</option>
+              </select>
+            </div>
           )}
-          <input
-            type="password"
-            name="newPassword"
-            placeholder="New Password (optional)"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
+
+          {/* New Password */}
+          <div className={styles.formGroup}>
+            <label htmlFor="newPassword">New Password</label>
+            <input
+              type="password"
+              name="newPassword"
+              placeholder="New Password (optional)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
           <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0' }}>
             Password must be at least 8 characters with letters, numbers, and symbols.
           </p>
