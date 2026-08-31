@@ -17,6 +17,7 @@ services:
 
   client:
     ports: !override ["7092:7091"]
-    environment: !reset []
+    environment:
+      VITE_ALLOWED_HOSTS: ${VITE_ALLOWED_HOSTS:-}
     volumes: !reset []
     command: npm run preview -- --host 0.0.0.0 --port 7091

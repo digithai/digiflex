@@ -31,6 +31,7 @@ services:
     ports: ["7091:7091"]
     environment:
       CHOKIDAR_USEPOLLING: "true"
+      VITE_ALLOWED_HOSTS: ${VITE_ALLOWED_HOSTS:-}
     volumes:
       - ./leaveboard-client:/app
       - /app/node_modules
