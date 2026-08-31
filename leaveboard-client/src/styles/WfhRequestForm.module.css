@@ -1,24 +1,15 @@
 .wfhRequestForm {
   display: flex;
   flex-direction: column;
-  align-items: normal;
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow-soft);
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 .wfhRequestForm * {
   margin-bottom: 16px;
-}
-
-.wfhRequestForm h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  letter-spacing: 0.02em;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .wfhRequestForm label {
@@ -37,6 +28,17 @@
   color: var(--text-primary);
   background: #fff;
   transition: all 0.2s ease;
+  width: 100%;
+}
+
+.wfhRequestForm select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 
 .wfhRequestForm input[type="date"]:focus,
@@ -58,6 +60,7 @@
   letter-spacing: 0.02em;
   transition: all 0.2s ease;
   margin-top: 8px;
+  width: 100%;
 }
 
 .wfhRequestForm button[type="submit"]:hover:not(:disabled) {

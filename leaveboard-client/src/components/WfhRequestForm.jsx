@@ -285,7 +285,6 @@ const WfhRequestForm = ({ onSubmitted }) => {
   return (
     <SectionWrap type="request">
       <form className={styles.wfhRequestForm} onSubmit={handleSubmit} >
-        <h3>Request WFH</h3>
 
         <select value={type} onChange={(e) => setType(e.target.value)} >
           <option value="wfh">Work From Home</option>

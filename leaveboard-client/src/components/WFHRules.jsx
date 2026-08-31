@@ -112,7 +112,6 @@ const WFHRules = () => {
 
   return (
     <section className={styles.rulesSection}>
-      <h2>Work From Home Rules</h2>
       {loading && <p>Loading rules...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <ul>
@@ -126,17 +125,11 @@ const WFHRules = () => {
           WFH requests for that week.
         </li>
         <li>{renderConcurrencyRule()}</li>
-        {concurrencyEntries.length > 0 && (
-          <li>
-            <ul>
-              {concurrencyEntries.map(([position, value]) => (
-                <li key={position}>
-                  {position}: up to {value} user(s) WFH on the same day
-                </li>
-              ))}
-            </ul>
+        {concurrencyEntries.map(([position, value]) => (
+          <li key={position}>
+            {position}: up to {value} user(s) WFH on the same day
           </li>
-        )}
+        ))}
       </ul>
     </section>
   );
