@@ -1,0 +1,22 @@
+# Staging/prod override.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Differences from the base docker-compose.yml:
+#   - server: NODE_ENV=production, no --watch, no source mount
+#   - client: publishes on host port 7092 (Apache owns 7091), runs `preview`
+#     (serves the built dist/ bundle), no source mount, no dev polling
+# Apache on the host proxies /api -> :7088 and / -> :7092.
+
+services:
+  server:
+    environment:
+      NODE_ENV: production
+    volumes: !reset []
+    command: node index.js
+
+  client:
+    ports: !override ["7092:7091"]
+    environment: !reset []
+    volumes: !reset []
+    command: npm run preview -- --host 0.0.0.0 --port 7091
