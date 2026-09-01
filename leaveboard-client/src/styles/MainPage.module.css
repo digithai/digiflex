@@ -663,3 +663,16 @@
 .pageTitle {
   margin: 0;
 }
+
+.viewHistoryButton {
+  background: none;
+  border: none;
+  color: #4382da;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.viewHistoryButton:hover {
+  color: #4f95f7;
+}
