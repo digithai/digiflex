@@ -48,7 +48,11 @@ const WFHRules = () => {
       return 'WFH date range uses the default rule: next week only.';
     }
 
-    return `WFH requests are allowed for: ${enabled.join(', ')}.`;
+    return (
+      <>
+        WFH requests are allowed for: <span className={styles.ruleHighlight}>{enabled.join(', ')}</span>.
+      </>
+    );
   };
 
   const renderWeekdayRule = () => {
@@ -62,7 +66,12 @@ const WFHRules = () => {
       .sort()
       .map((d) => weekdayNames[d])
       .join(', ');
-    return `WFH requests are not allowed on: ${humanList}.`;
+    
+    return (
+      <>
+        WFH requests are not allowed on: <span className={styles.ruleHighlight}>{humanList}</span>.
+      </>
+    );
   };
 
   const renderConcurrencyRule = () => {
@@ -83,11 +92,18 @@ const WFHRules = () => {
     }
 
     if (allowed <= 1) {
-      return `Your team (${position}) does not allow to have members WFH on the same day.`;
+      return (
+        <>
+          Your team <span className={styles.ruleHighlight}>({position})</span> does not allow to have members WFH on the same day.
+        </>
+      );
     }
 
-    return `Your team (${position}) allows to have ${allowed} member${allowed === 1 ? '' : 's'} ` +
-      'WFH on the same day.';
+    return ( 
+      <>
+        Your team <span className={styles.ruleHighlight}>({position})</span> allows to have <span className={styles.ruleHighlight}>{allowed}</span> member{allowed === 1 ? '' : 's'} WFH on the same day.
+      </>
+    );
   };
 
   const userPosition = user && user.position ? user.position : null;
@@ -104,7 +120,7 @@ const WFHRules = () => {
     return (
       <>
         Each user has a weekly WFH allowance (your current allowance is{' '}
-        <strong>{allowance} day{allowance === 1 ? '' : 's'} per week</strong>). Public holidays in that week reduce the
+        <strong><span className={styles.ruleHighlight}>{allowance} day{allowance === 1 ? '' : 's'} per week</span></strong>). Public holidays in that week reduce the
         number of WFH days available.
       </>
     );
@@ -127,7 +143,7 @@ const WFHRules = () => {
         <li>{renderConcurrencyRule()}</li>
         {concurrencyEntries.map(([position, value]) => (
           <li key={position}>
-            {position}: up to {value} user(s) WFH on the same day
+            <span className={styles.ruleHighlight}>{position}</span>: up to <span className={styles.ruleHighlight}>{value}</span> user(s) WFH on the same day
           </li>
         ))}
       </ul>

@@ -69,6 +69,8 @@ export const loginUser = async (req, res) => {
         office: user.office,
         country: user.country,
         wfhWeekly: user.wfhWeekly,
+        wfhAnnualQuota: user.wfhAnnualQuota,
+        wfhAnnualBalance: user.wfhAnnualBalance,
         leaveCounts: user.leaveCounts,
         isActive: user.isActive,
         tenant: user.tenant,

@@ -9,7 +9,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 1.5em 0;
   z-index: 999;
+  overflow-y: auto;
 }
 
 .modal {
@@ -17,10 +19,12 @@
   padding: 28px;
   width: 420px;
   max-width: 90%;
-  margin: 2em 0;
+  max-height: calc(100vh - 5em);
+  overflow-y: auto;
   border-radius: var(--radius);
   box-shadow: var(--shadow-medium);
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .modal h3 {

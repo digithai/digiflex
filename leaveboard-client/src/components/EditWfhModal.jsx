@@ -13,6 +13,8 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
   const [position, setPosition] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wfhAnnualQuota, setWfhAnnualQuota] = useState('');
+  const [wfhAnnualBalance, setWfhAnnualBalance] = useState('');
 
   const availableRoles = getAvailableRoles(currentUser?.role);
   const canChangeRole = currentUser?.role === 'tenant_admin' || currentUser?.role === 'superadmin';
@@ -23,6 +25,8 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
       setNewPassword('');
       setRole(user.role);
       setPosition(user.position || '');
+      setWfhAnnualQuota(user.wfhAnnualQuota ?? '');
+      setWfhAnnualBalance(user.wfhAnnualBalance ?? '');
       setError('');
     }
   }, [user]);
@@ -35,6 +39,18 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
     const num = Number(value);
     if (Number.isNaN(num) || num < 0) {
       setError('wfhWeekly must be a non-negative number');
+      return;
+    }
+
+    const quotaNum = Number(wfhAnnualQuota);
+    if (Number.isNaN(quotaNum) || quotaNum < 0) {
+      setError('Annual WFH quota must be a non-negative number');
+      return;
+    }
+
+    const balanceNum = Number(wfhAnnualBalance);
+    if (Number.isNaN(balanceNum) || balanceNum < 0) {
+      setError('Annual WFH balance must be a non-negative number');
       return;
     }
 
@@ -71,6 +87,14 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
         });
       }
+      // Update wfhAnnualQuota
+      await axios.put(`${base}/wfhAnnualQuota`, { wfhAnnualQuota: quotaNum }, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      });
+      // Update wfhAnnualBalance
+      await axios.put(`${base}/wfhAnnualBalance`, { wfhAnnualBalance: balanceNum }, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      });
       if (onUpdated) onUpdated();
       onClose();
     } catch (err) {
@@ -97,6 +121,22 @@ const EditWfhModal = ({ isOpen, onClose, user, token, onUpdated }) => {
             placeholder="Weekly WFH days"
             value={value}
             onChange={(e) => setValue(e.target.value)}
+            min={0}
+          />
+          <input
+            type="number"
+            name="wfhAnnualQuota"
+            placeholder="Annual WFH quota"
+            value={wfhAnnualQuota}
+            onChange={(e) => setWfhAnnualQuota(e.target.value)}
+            min={0}
+          />
+          <input
+            type="number"
+            name="wfhAnnualBalance"
+            placeholder="Annual WFH balance"
+            value={wfhAnnualBalance}
+            onChange={(e) => setWfhAnnualBalance(e.target.value)}
             min={0}
           />
           {canChangeRole && currentUser._id !== user._id && (

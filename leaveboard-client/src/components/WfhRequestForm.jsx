@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import SectionWrap from './SectionWrap';
 import styles from '../styles/WfhRequestForm.module.css';
+import { getWeekBounds } from '../utils/dateUtils';
 
-const WfhRequestForm = ({ onSubmitted }) => {
+const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const [type, setType] = useState('wfh');
   const [date, setDate] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -17,12 +18,14 @@ const WfhRequestForm = ({ onSubmitted }) => {
   const [disallowedWeekdays, setDisallowedWeekdays] = useState([1, 5, 0, 6]); // default: Monday, Friday, weekend
   const [blocked, setBlocked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [holidayAdjustmentData, setHolidayAdjustmentData] = useState(null);
 
   const url = `${import.meta.env.VITE_BASE_URL}/api/wfh/request`;
   const approvedUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approved`;
   const pendingUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approvals`;
   const holidaysUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
+  const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   useEffect(() => {
     if (type === 'sick' && Array.isArray(date)) {
@@ -85,20 +88,7 @@ const WfhRequestForm = ({ onSubmitted }) => {
     if (token) fetchSettings();
   }, [settingsUrl, token]);
 
-  const getWeekBounds = (d) => {
-    const dt = new Date(d);
-    // Week starts Monday (1) and ends Sunday (0)
-    const day = dt.getDay();
-    const diffToMonday = (day === 0 ? -6 : 1) - day; // how many days to add to reach Monday
-    const start = new Date(dt);
-    start.setDate(dt.getDate() + diffToMonday);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  };
-
+  // Check if WFH is blocked due to holidays or disallowed weekdays
   useEffect(() => {
     if (type === 'wfh' && user && date) {
       const selected = new Date(date);
@@ -177,12 +167,37 @@ const WfhRequestForm = ({ onSubmitted }) => {
       } else if (limitBlocked) {
         setMessage(`You have reached your weekly WFH limit (${maxDays}). Total this week: ${countsForWeek.all}.`);
       } else {
-        setMessage(null);
+        // Don't clear success messages
+        if (message && (message.includes('success') || message.includes('submitted'))) {
+          // Keep success message
+        } else {
+          setMessage(null);
+        }
       }
     } else {
       setBlocked(false);
     }
   }, [type, user, date, approved, pending, holidays, disallowedWeekdays]);
+
+  // Calculate holiday adjustment for target week
+  useEffect(() => {
+    if (targetWeek && user) {
+      const { start: weekStart, end: weekEnd } = targetWeek;
+      const holidaysInWeek = holidays.filter((h) => {
+        if (!h?.date) return false;
+        const hd = new Date(h.date);
+        return hd >= weekStart && hd <= weekEnd;
+      }).length;
+
+      const baseMaxDays = user.wfhWeekly || 1;
+      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
+      const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
+      const usableDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
+      const weekLabel = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+
+      setHolidayAdjustmentData({ holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays, usableDays, wfhAnnualBalance });
+    }
+  }, [targetWeek, holidays, user]);
 
   const countsForWeek = (() => {
     if (!user || !date) return { approved: 0, pending: 0, all: 0 };
@@ -260,7 +275,6 @@ const WfhRequestForm = ({ onSubmitted }) => {
 
       setMessage(res.data.message);
       if (typeof onSubmitted === 'function') onSubmitted();
-      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       setMessage(err.response?.data?.message || 'Error submitting request.');
       setSubmitting(false);
@@ -284,6 +298,13 @@ const WfhRequestForm = ({ onSubmitted }) => {
 
   return (
     <SectionWrap type="request">
+      {/* show weekly quota */}
+      <div className={styles.quotaDisplay}>
+        <span className={styles.quotaLabel}>Weekly quota:</span>
+        <span className={styles.quotaValue}>{Number(user?.wfhWeekly) || 0} day(s) / week</span>
+      </div>
+
+      {/* wfh request form */}
       <form className={styles.wfhRequestForm} onSubmit={handleSubmit} >
 
         <select value={type} onChange={(e) => setType(e.target.value)} >
@@ -294,9 +315,69 @@ const WfhRequestForm = ({ onSubmitted }) => {
 
         {datePickerBasedOnRequestType()}
 
-        <button type="submit" disabled={blocked || submitting} style={{ backgroundColor: (blocked || submitting) ? '#ccc' : undefined, cursor: (blocked || submitting) ? 'not-allowed' : 'pointer' }}>
+        <button type="submit" disabled={blocked || submitting} className={styles.submitButton}>
           Submit Request
         </button>
+
+        <div className={styles.holidayAdjustment}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+            
+            {holidayAdjustmentData && (
+              <span>
+                <strong className={styles.holidayAdjustmentLabel}>WFH Adjustment: </strong>
+                {(() => {
+                  const { holidaysInWeek, weekLabel, baseMaxDays, effectiveMaxDays, usableDays, wfhAnnualBalance } = holidayAdjustmentData;
+
+                  // Case 1: Both holiday and annual cap
+                  if (holidaysInWeek > 0 && usableDays < effectiveMaxDays) {
+                    return (
+                      <>
+                        There {holidaysInWeek === 1 ? 'is' : 'are'} {holidaysInWeek} public
+                        holiday{holidaysInWeek === 1 ? '' : 's'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>.
+                        Your weekly quota is reduced from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'} due to holidays,
+                        and further capped to {usableDays} day{usableDays === 1 ? '' : '(s)'} by your annual balance.
+                      </>
+                    );
+                  }
+                  // Case 2: Holiday adjustment only
+                  if (holidaysInWeek > 0) {
+                    return (
+                      <>
+                        There {holidaysInWeek === 1 ? 'is' : 'are'} {holidaysInWeek} public
+                        holiday{holidaysInWeek === 1 ? '' : 's'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>, automatically adjusting your
+                        WFH allowance from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'}.
+                      </>
+                    );
+                  }
+                  // Case 3: Annual cap only
+                  if (holidaysInWeek === 0 && usableDays < baseMaxDays) {
+                    return (
+                      <>
+                        Your weekly quota is {baseMaxDays} day{baseMaxDays === 1 ? '' : '(s)'} for the week
+                        <span className={styles.holidayAway}>({weekLabel})</span>,
+                        but capped to {usableDays} day{usableDays === 1 ? '' : '(s)'} by your annual balance.
+                      </>
+                    );
+                  }
+                  // Case 4: No adjustment
+                  return (
+                    <>
+                      No public holidays for the week
+                      <span className={styles.holidayAway}>({weekLabel})</span>.
+                      No adjustment needed.
+                    </>
+                  );
+                })()}
+              </span>
+            )}
+        
+        </div>
 
         {message && <p >{message}</p>}
       </form>

@@ -226,6 +226,14 @@ export const requestWfh = async (req, res) => {
       }
     }
 
+    // Decrement annual balance if the request is pre-approved (status: 'approved')
+    if (newRequest.type === 'wfh' && newRequest.status === 'approved' && user) {
+      await User.findOneAndUpdate(
+        { _id: user._id, wfhAnnualBalance: { $gt: 0 } },
+        { $inc: { wfhAnnualBalance: -1 } }
+      );
+    }
+
     return res.status(201).json({ message: 'Request submitted successfully.', request: newRequest });
   } catch (err) {
     console.error(err);
@@ -291,6 +299,15 @@ export const approveRequest = async (req, res) => {
     request.approvedByName = req.user.name;
     request.approvedByEmail = req.user.email;
     await request.save();
+
+    // Reduce the requester's annual WFH balance by 1 for WFH requests
+    // Only decrement if the current balance is greater than 0
+    if (request.type === 'wfh' && request.user) {
+      await User.findOneAndUpdate(
+        { _id: request.user._id, wfhAnnualBalance: { $gt: 0 } },
+        { $inc: { wfhAnnualBalance: -1 } }
+      );
+    }
 
     // Sync to Google Calendar for WFH requests
     if (request.type === 'wfh' && googleCalendarConfig.enabled) {
@@ -385,6 +402,14 @@ export const deleteRequest = async (req, res) => {
       ...getTenantQuery(req),
     });
     if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    // Re-increment WFH annual balance if the approved request is deleted
+    if (request.type === 'wfh' && request.status === 'approved') {
+      await User.findOneAndUpdate(
+        { _id: request.user },
+        { $inc: { wfhAnnualBalance: 1 } }
+      );
+    }
 
     // Delete from Google Calendar if synced
     if (request.type === 'wfh' && request.googleCalendarEventId) {

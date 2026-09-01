@@ -84,7 +84,7 @@ router.post('/login', (req, res, next) => {
 
 // Admin creates user
 router.post('/register', protect, tenantAdminOnly, async (req, res) => {
-  const { name, email, password, role, position, team, office, country, wfhWeekly, leaveCounts } = req.body;
+  const { name, email, password, role, position, team, office, country, wfhWeekly, wfhAnnualQuota, wfhAnnualBalance, leaveCounts } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: 'Name is required' });
@@ -130,6 +130,17 @@ router.post('/register', protect, tenantAdminOnly, async (req, res) => {
   // Only set wfhWeekly if provided (non-empty), otherwise let schema default apply
   if (wfhWeekly !== undefined && wfhWeekly !== '') {
     userPayload.wfhWeekly = Number(wfhWeekly);
+  }
+
+  // Only set annual quota/balance if provided, otherwise use schema defaults
+  if (wfhAnnualQuota !== undefined && wfhAnnualQuota !== '') {
+    userPayload.wfhAnnualQuota = Number(wfhAnnualQuota);
+    if (wfhAnnualBalance === undefined || wfhAnnualBalance === '') {
+      userPayload.wfhAnnualBalance = userPayload.wfhAnnualQuota;
+    }
+  }
+  if (wfhAnnualBalance !== undefined && wfhAnnualBalance !== '') {
+    userPayload.wfhAnnualBalance = Number(wfhAnnualBalance);
   }
 
   // Optionally allow leaveCounts to be set if provided
@@ -326,6 +337,21 @@ router.post('/validate-reset-token', (req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
   }
   
+});
+
+// Get current user
+router.get('/me', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if(!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  }
+  catch (err) {
+    console.error('Error fetching current user:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 export default router;

@@ -1,15 +1,16 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { truncateText } from '../utils/textUtils';
+import { useHolidays } from '../hooks/useHolidays';
 import styles from '../styles/UserCalendar.module.css';
 
 const UserCalendar = ({ refreshKey = 0 }) => {
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [holidays, setHolidays] = useState([]);
   const [disallowedWeekdays, setDisallowedWeekdays] = useState([1, 5, 0, 6]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = localStorage.getItem('token');
+  const { holidays, loading: holidaysLoading } = useHolidays(refreshKey);
 
   const getDates = () => {
     const today = new Date();
@@ -26,16 +27,14 @@ const UserCalendar = ({ refreshKey = 0 }) => {
 
   const dates = useMemo(() => getDates(), []);
   const url = `${import.meta.env.VITE_BASE_URL}/api/calendar`;
-  const holidaysUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
 
   const fetchData = useCallback(async () => {
       setLoading(true);
       setError(null);
       try {
-        const [calRes, holRes, settingsRes] = await Promise.all([
+        const [calRes, settingsRes] = await Promise.all([
           fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(holidaysUrl, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(settingsUrl, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
@@ -43,34 +42,26 @@ const UserCalendar = ({ refreshKey = 0 }) => {
         setUsers(calData.users || []);
         setRequests(calData.requests || []);
 
-        if (holRes.ok) {
-          const holData = await holRes.json();
-          setHolidays(Array.isArray(holData) ? holData : []);
-        } else {
-          setHolidays([]);
-        }
-
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
-          const serverDisallowed = (settingsData?.disallowedWeekdays?.length) 
-            ? settingsData.disallowedWeekdays 
+          const serverDisallowed = (settingsData?.disallowedWeekdays?.length)
+            ? settingsData.disallowedWeekdays
             : [1, 5, 0, 6];
           setDisallowedWeekdays(serverDisallowed.map((n) => Number(n)));
         } else {
           setDisallowedWeekdays([1, 5, 0, 6]);
         }
-      } 
+      }
       catch (e) {
         setError('Failed to load calendar data');
         setUsers([]);
         setRequests([]);
-        setHolidays([]);
         setDisallowedWeekdays([1, 5, 0, 6]);
-      } 
+      }
       finally {
         setLoading(false);
       }
-  }, [url, holidaysUrl, token]);
+  }, [url, token]);
 
   useEffect(() => {
     if (token) {
@@ -136,7 +127,7 @@ const UserCalendar = ({ refreshKey = 0 }) => {
       <h2 className={styles.calendarTitle}>Team Work From Home Calendar</h2>
       <span className={styles.calendarSubtitle}>31-day rolling schedule of team attendance, holidays, and pending requests</span>
       
-      {loading && (
+      {loading && holidaysLoading && (
         <div className={styles.stateMessage}>
           <div className={styles.stateContent}>
             <div className={styles.loadingIcon}>⟳</div>
@@ -201,18 +192,18 @@ const UserCalendar = ({ refreshKey = 0 }) => {
               <span>Pending</span>
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, var(--grey-dark) 0%, #374151 100%)' }}></span>
+              <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, var(--grey-dark) 0%, #374151 100%)', opacity: 0.35 }}></span>
               <span>Weekend</span>
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendColor} style={{ background: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)' }}></span>
-              <span>Holiday</span>
-            </div>
-            <div className={styles.legendItem}>
-              <span className={styles.legendColor} style={{ background: '#fff', border: '1px solid #e5e7eb', position: 'relative' }}>
-                <span style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'repeating-linear-gradient(45deg, transparent, transparent 2px, #9ca3af 2px, #9ca3af 4px, transparent 4px, transparent 6px)', opacity: 0.5 }}></span>
+              <span className={styles.legendColor} style={{ background: '#fff', border: '1px solid #e5e7eb', position: 'relative', overflow: 'hidden' }}>
+                <span style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'repeating-linear-gradient(45deg, transparent, transparent 2px, #9ca3af 2px, #9ca3af 4px, transparent 4px, transparent 6px)', opacity: 0.25 }}></span>
               </span>
               <span>Restricted Day</span>
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.legendColor} style={{ background: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.25)' }}></span>
+              <span>Holiday</span>
             </div>
           </div>
         </>
