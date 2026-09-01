@@ -37,7 +37,7 @@ const formatDateLocal = (date) => {
          String(d.getDate()).padStart(2, '0');
 };
 
-const ApprovedWfhList = ({ showApprovedList = true, externalRefreshKey = 0 }) => {
+const ApprovedWfhList = ({ showApprovedList = true, externalRefreshKey = 0, onSubmitted }) => {
   const dispatch = useDispatch();
   const { approvedRequests, loading, error } = useSelector((state) => state.approvals);
 
@@ -221,6 +221,7 @@ const today = formatDateLocal(new Date());
                         setSelectedDate('');
                         setRefreshKey((k) => k + 1);
                         dispatch(fetchApprovedRequests());
+                        if (typeof onSubmitted === 'function') onSubmitted();
                       } catch (err) {
                         alert(err.response?.data?.message || 'Failed to create request');
                       } finally {

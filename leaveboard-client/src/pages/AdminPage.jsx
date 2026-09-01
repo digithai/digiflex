@@ -32,7 +32,7 @@ const AdminPage = () => {
       }
     };
     if (token) fetchUser();
-  }, [token, dispatch]);
+  }, [token, refreshKey, dispatch]);
 
   return (
     <div className={styles.MainPage}>
@@ -53,7 +53,7 @@ const AdminPage = () => {
           </div>
         </div>
       </div>
-      <ApprovedWfhList showApprovedList={false} externalRefreshKey={refreshKey} />
+      <ApprovedWfhList showApprovedList={false} externalRefreshKey={refreshKey} onSubmitted={handleSubmitted}/>
     </div>
   );
 };
