@@ -29,7 +29,6 @@ const allowedOrigins = [
   process.env.VITE_BASE_URL,
   'http://localhost:7091',
   'http://localhost:5173',
-  'https://nonbankable-beaulah-reasonlessly.ngrok-free.dev',
 ].filter(Boolean);
 
 app.use(cors({
