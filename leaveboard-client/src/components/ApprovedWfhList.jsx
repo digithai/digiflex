@@ -8,6 +8,7 @@ import styles from '../styles/ApprovedWfhList.module.css';
 import { getRoleLabel } from '../utils/roleLabels.js';
 import DatePicker from 'react-datepicker';
 import { format, parseISO } from 'date-fns';
+import { ChevronDown } from 'lucide-react';
 
 const API = `${import.meta.env.VITE_BASE_URL}/api/wfh`;
 
@@ -25,7 +26,7 @@ const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
         ? format(parseISO(value), 'EEE, d MMM yyyy')
         : 'Select date'}
     </span>
-    <span className={styles.datePickerIcon}>📅 ▼</span>
+    <span className={styles.datePickerIcon}><ChevronDown/></span>
   </button>
 ));
 
@@ -169,20 +170,32 @@ const today = formatDateLocal(new Date());
             ) : (
               <>
                 <label style={{ display: 'block', marginBottom: 6 }}>User</label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className={styles.modalInput}
-                >
-                  <option value="">Select a user</option>
-                  {allUsers
-                    .filter((u) => user?.role === 'tenant_admin' ? true : u._id !== user?._id)
-                    .map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name} ({getRoleLabel(u.role)})
-                      </option>
-                    ))}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className={styles.createWFHModalInput}
+                  >
+                    <option value="">Select a user</option>
+                    {allUsers
+                      .filter((u) => user?.role === 'tenant_admin' ? true : u._id !== user?._id)
+                      .map((u) => (
+                        <option key={u._id} value={u._id}>
+                          {u.name} ({getRoleLabel(u.role)})
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronDown 
+                    style={{ 
+                      position: 'absolute', 
+                      right: '14px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      pointerEvents: 'none', 
+                      color: '#64748b', 
+                      fontSize: '12px' 
+                  }} />
+                </div>
 
                 <label style={{ display: 'block', marginBottom: 6 }}>Date</label>
                 <div className={styles.datePickerWrapper}>

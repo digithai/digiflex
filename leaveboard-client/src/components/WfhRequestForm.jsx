@@ -7,6 +7,7 @@ import { getWeekBounds } from '../utils/dateUtils';
 import DatePicker from 'react-datepicker';
 import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
+import { ChevronDown, CalendarDays } from 'lucide-react';
 
 const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const [type, setType] = useState('wfh');
@@ -120,7 +121,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       
       // Set new timer
       timerRef.current = setTimeout(() => {
-        console.log("Timer expired, clearing message");
         setAutoDismissMessage(null);
         timerRef.current = null;
       }, 5000);
@@ -153,7 +153,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     if (type === 'sick' && Array.isArray(date)) {
       const diff = (new Date(date[1]) - new Date(date[0])) / (1000 * 60 * 60 * 24) + 1;
       if (diff > 2) {
-        setMessage('📩 If your sick leave is longer than 2 days, please send a medical certificate to hr@digithaigroup.com');
+        setMessage('If your sick leave is longer than 2 days, please send a medical certificate to hr@digithaigroup.com');
       }
     }
   }, [type, date]);
@@ -477,21 +477,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     // console.log('Info panel status:', status);
     const dateStr = format(date, 'EEE, MMM d');
     
-    const getStatusIcon = (type) => {
-      switch (type) {
-        case 'eligible': return '✅';
-        case 'holiday': return '🎉';
-        case 'mon_fri_restricted': return '🏢';
-        case 'team_limit_reached': return '🚫';
-        case 'team_pending_warning': return '⚠️';
-        case 'weekend': return '🏖️';
-        case 'outside_scope': return '📅';
-        case 'user_approved': return '✓';
-        case 'user_pending': return '⏳';
-        default: return 'ℹ️';
-      }
-    };
-
     const getStatusText = (type) => {
       const { approved, pending, max } = status.counts || {};
       
@@ -503,9 +488,9 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         case 'team_limit_reached': 
           return 'Team Limit Reached';
         case 'user_approved': 
-          return 'Your WFH request is ✓ approved';
+          return 'Your WFH request is approved';
         case 'user_pending': 
-          return 'Your WFH request is ⏳ pending approval';
+          return 'Your WFH request is pending approval';
         case 'weekend': 
           return 'Weekend';
         case 'outside_scope': 
@@ -571,7 +556,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       return (
         <>
           <div className={styles.infoPanelHeader}>
-            <span className={styles.infoPanelIcon}>{getStatusIcon(status.type)}</span>
+            <CalendarDays className={styles.infoPanelIcon} />
             <span className={styles.infoPanelDate}>{dateStr}</span>
           </div>
           <div className={`${styles.infoPanelDetails} ${getStatusColor(status.type)}`}>
@@ -583,7 +568,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
     return (
       <div className={styles.infoPanelBrief}>
-        <span className={styles.infoPanelIcon}>{getStatusIcon(status.type)}</span>
         <span className={styles.infoPanelText}>{dateStr}: {getStatusText(status.type)}</span>
       </div>
     );
@@ -779,7 +763,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       });
 
       setMessage(res.data.message);
-      console.log("Message set to:", res.data.message);
       setSubmitting(false);
 
       // Refresh data after successful submission
@@ -797,7 +780,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       if (typeof onSubmitted === 'function') onSubmitted();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Error submitting request.');
-      console.log("Setting error message:", err.response?.data?.message);
       setSubmitting(false);
     }
   };
@@ -821,7 +803,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
           ? format(parseISO(date), 'EEE, d MMM yyyy')
           : `Select WFH date for ${weekScope} week...`}
       </span>
-      <span className={styles.datePickerIcon}>📅 ▼</span>
+      <span className={styles.datePickerIcon}><ChevronDown/></span>
     </button>
   ));
 
@@ -943,11 +925,32 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       {/* wfh request form */}
       <form className={styles.wfhRequestForm} onSubmit={handleSubmit} >
 
-        <select value={type} onChange={(e) => setType(e.target.value)} >
-          <option value="wfh">Work From Home</option>
-          {/*<option value="sick">Sick Leave</option>
-          <option value="timeoff">Time Off</option> */}
-        </select>
+        <div style={{ position: 'relative' }}>
+          <select 
+            value={type} 
+            onChange={(e) => setType(e.target.value)} 
+            style={{ 
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              MozAppearance: 'none',
+              paddingRight: '32px',
+              backgroundImage: 'none'
+            }}
+          >
+            <option value="wfh">Work From Home</option>
+            {/*<option value="sick">Sick Leave</option>
+            <option value="timeoff">Time Off</option> */}
+          </select>
+          <ChevronDown style={{ 
+            position: 'absolute', 
+            right: '14px', 
+            top: '50%', 
+            transform: 'translateY(-50%)', 
+            pointerEvents: 'none', 
+            color: '#64748b', 
+            fontSize: '12px' 
+          }} />
+        </div>
 
         {datePickerBasedOnRequestType()}
 
@@ -1026,11 +1029,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
         {autoDismissMessage && (
           <div className={`${styles.messageCard} ${styles[`message${messageType.charAt(0).toUpperCase() + messageType.slice(1)}`]}`}>
-            <div className={styles.messageIcon}>
-              {messageType === 'success' && '✅'}
-              {messageType === 'error' && '❌'}
-              {messageType === 'info' && 'ℹ️'}
-            </div>
             <span className={styles.messageText}>{autoDismissMessage}</span>
           </div>
         )}
