@@ -9,7 +9,8 @@ import {
     rejectRequest,
     deleteRequest,
     updateRequestDate,
-    exportWfhRequests
+    exportWfhRequests,
+    getUserWfhHistory
 } from '../controllers/wfhController.js';
 
 const router = express.Router();
@@ -36,5 +37,8 @@ router.get('/approvals', protect, getPendingRequests); // pending
 router.get('/approved', protect, getApprovedRequests); // approved
 router.get('/rejected', protect, getRejectedRequests); // rejected
 router.get('/export', protect, exportWfhRequests); // export all requests
+
+// GET WFH requests for specific user
+router.get('/user/history', protect, getUserWfhHistory); // approved, pending, rejected
 
 export default router;

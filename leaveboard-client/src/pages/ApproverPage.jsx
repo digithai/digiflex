@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import WfhRequestForm from '../components/WfhRequestForm';
-import { WfhBalance } from '../pages/UserPage';
+import WfhBalance from '../components/WfhBalance';
 import styles from '../styles/MainPage.module.css';
 import ApprovedWfhList from '../components/ApprovedWfhList';
 import { useWfhSettings } from '../hooks/useWfhSettings';
@@ -9,11 +9,12 @@ import { getTargetWeek, getWeekLabel } from '../utils/dateUtils';
 import { updateUser } from '../features/auth/authSlice';
 
 const ApproverPage = () => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handleSubmitted = () => setRefreshKey((k) => k + 1);
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
   const { settings } = useWfhSettings();
   const targetWeek = getTargetWeek(settings);
-  const currentWeekLabel = getWeekLabel(targetWeek.start);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,7 +32,7 @@ const ApproverPage = () => {
       }
     };
     if (token) fetchUser();
-  }, [token, dispatch]);
+  }, [token, refreshKey, dispatch]);
   
   return (
     <div className={styles.MainPage}>
@@ -41,18 +42,18 @@ const ApproverPage = () => {
           <h2 className={styles.cardHeading}>Request WFH</h2>
           <span className={styles.cardSubheading}>Submit a request for approval</span>
           <div className={styles.cardContent}>
-            <WfhRequestForm targetWeek={targetWeek} />
+            <WfhRequestForm targetWeek={targetWeek} onSubmitted={handleSubmitted} />
           </div>
         </div>
         <div className={styles.card}>
           <h2 className={styles.cardHeading}>WFH Balance</h2>
           <span className={styles.cardSubheading}>Quota and upcoming holidays</span>
           <div className={styles.cardContent}>
-            <WfhBalance />
+            <WfhBalance refreshKey={refreshKey} />
           </div>
         </div>
       </div>
-      <ApprovedWfhList showApprovedList={false} />
+      <ApprovedWfhList showApprovedList={false} externalRefreshKey={refreshKey} />
     </div>
   );
 };

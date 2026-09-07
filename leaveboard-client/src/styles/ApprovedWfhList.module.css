@@ -27,12 +27,41 @@
   padding: 12px 14px;
   margin-bottom: 12px;
   border-radius: var(--button-radius);
-  border: 1px solid var(--surface-border);
+  border: 1px solid #e9e5e5;
   box-sizing: border-box;
   font-size: 14px;
   color: var(--text-primary);
   background: #fff;
   transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.createWFHModalInput {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: var(--button-radius);
+  border: 1px solid #e9e5e5;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: #fff;
+  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 32px;
+  background-image: none;
+}
+
+.modalInput:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
 }
 
 .modalInput:focus {
@@ -81,4 +110,32 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Date picker */
+.datePickerWrapper {
+  display: block !important;
+  width: 100% !important;
+  margin: 6px 0;
+  box-sizing: border-box;
+}
+
+.datePickerWrapper > div,
+.react-datepicker__input-container{
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.datePickerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datePickerIcon {
+  font-size: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+  margin-left: 8px;
 }

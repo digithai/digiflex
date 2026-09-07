@@ -226,10 +226,10 @@ export const requestWfh = async (req, res) => {
       }
     }
 
-    // Decrement annual balance if the request is pre-approved (status: 'approved')
-    if (newRequest.type === 'wfh' && newRequest.status === 'approved' && user) {
+    // Decrement annual balance if the request is submitted (from user or admin)
+    if (newRequest.type === 'wfh' && user) {
       await User.findOneAndUpdate(
-        { _id: user._id, wfhAnnualBalance: { $gt: 0 } },
+        { _id: user._id, tenant: tenantId, wfhAnnualBalance: { $gt: 0 } },
         { $inc: { wfhAnnualBalance: -1 } }
       );
     }
@@ -267,6 +267,32 @@ export const getApprovedRequests = async (req, res) => {
   }
 };
 
+// get specific user's WFH requests history (approved, pending, rejected)
+export const getUserWfhHistory = async (req, res) => {
+  try {
+    const targetYear = Number(req.query.year) || new Date().getFullYear();
+
+    const startDate = new Date(Date.UTC(targetYear, 0, 1));
+    const endDate = new Date(Date.UTC(targetYear + 1, 0, 1));
+
+    const requests = await WfhRequest.find({
+      ...getTenantQuery(req),
+      user: req.user._id,
+      date: { $gte: startDate, $lt: endDate },
+    })
+      .sort({ date: -1 })
+      .populate('user', 'name email position role');
+
+    res.status(200).json({
+      year: targetYear,
+      requests: requests
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch WFH history' });
+  }
+};
+
 export const getRejectedRequests = async (req, res) => {
   try {
     const requests = await WfhRequest.find({
@@ -299,15 +325,6 @@ export const approveRequest = async (req, res) => {
     request.approvedByName = req.user.name;
     request.approvedByEmail = req.user.email;
     await request.save();
-
-    // Reduce the requester's annual WFH balance by 1 for WFH requests
-    // Only decrement if the current balance is greater than 0
-    if (request.type === 'wfh' && request.user) {
-      await User.findOneAndUpdate(
-        { _id: request.user._id, wfhAnnualBalance: { $gt: 0 } },
-        { $inc: { wfhAnnualBalance: -1 } }
-      );
-    }
 
     // Sync to Google Calendar for WFH requests
     if (request.type === 'wfh' && googleCalendarConfig.enabled) {
@@ -357,6 +374,14 @@ export const rejectRequest = async (req, res) => {
     request.approvedByEmail = req.user.email;
     await request.save();
 
+    // Refund WFH annual balance if request is rejected
+    if (request.type === 'wfh' && request.status === 'rejected') {
+      await User.findOneAndUpdate(
+        { _id: request.user, tenant: req.user.tenant._id },
+        { $inc: { wfhAnnualBalance: 1 } }
+      );
+    }
+
     // Get approvers/tenant admins for contact information
     const approvers = await User.find({
       tenant: req.user.tenant._id,
@@ -403,10 +428,10 @@ export const deleteRequest = async (req, res) => {
     });
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
-    // Re-increment WFH annual balance if the approved request is deleted
+    // Refund WFH annual balance if the approved request is deleted
     if (request.type === 'wfh' && request.status === 'approved') {
       await User.findOneAndUpdate(
-        { _id: request.user },
+        { _id: request.user, tenant: req.user.tenant._id },
         { $inc: { wfhAnnualBalance: 1 } }
       );
     }

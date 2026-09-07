@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchApprovedRequests } from '../app/approvalsSlice';
 import ApprovedCard from './ApprovedCard';
@@ -6,8 +6,29 @@ import axios from 'axios';
 import UserCalendar from './UserCalendar';
 import styles from '../styles/ApprovedWfhList.module.css';
 import { getRoleLabel } from '../utils/roleLabels.js';
+import DatePicker from 'react-datepicker';
+import { format, parseISO } from 'date-fns';
+import { ChevronDown } from 'lucide-react';
 
 const API = `${import.meta.env.VITE_BASE_URL}/api/wfh`;
+
+const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    onClick={(e) => {
+      if (onClick) onClick(e);
+    }}
+    className={styles.modalInput}
+  >
+    <span className={styles.datePickerLabel}>
+      {value
+        ? format(parseISO(value), 'EEE, d MMM yyyy')
+        : 'Select date'}
+    </span>
+    <span className={styles.datePickerIcon}><ChevronDown/></span>
+  </button>
+));
 
 // Example values
 const formatDateLocal = (date) => {
@@ -17,7 +38,7 @@ const formatDateLocal = (date) => {
          String(d.getDate()).padStart(2, '0');
 };
 
-const ApprovedWfhList = ({ showApprovedList = true }) => {
+const ApprovedWfhList = ({ showApprovedList = true, externalRefreshKey = 0, onSubmitted }) => {
   const dispatch = useDispatch();
   const { approvedRequests, loading, error } = useSelector((state) => state.approvals);
 
@@ -34,8 +55,10 @@ const ApprovedWfhList = ({ showApprovedList = true }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchApprovedRequests());
-  }, [dispatch]);
+    if (externalRefreshKey > 0) {
+      dispatch(fetchApprovedRequests());
+    }
+  }, [dispatch, externalRefreshKey]);
 
   useEffect(() => {
     setRequests(approvedRequests);
@@ -92,7 +115,7 @@ const today = formatDateLocal(new Date());
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <UserCalendar key={refreshKey} />
+        <UserCalendar key={refreshKey || externalRefreshKey} />
       </div>
       {showApprovedList && <h2>Approved WFH Requests</h2>}
 
@@ -147,28 +170,44 @@ const today = formatDateLocal(new Date());
             ) : (
               <>
                 <label style={{ display: 'block', marginBottom: 6 }}>User</label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className={styles.modalInput}
-                >
-                  <option value="">Select a user</option>
-                  {allUsers
-                    .filter((u) => user?.role === 'tenant_admin' ? true : u._id !== user?._id)
-                    .map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name} ({getRoleLabel(u.role)})
-                      </option>
-                    ))}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className={styles.createWFHModalInput}
+                  >
+                    <option value="">Select a user</option>
+                    {allUsers
+                      .filter((u) => user?.role === 'tenant_admin' ? true : u._id !== user?._id)
+                      .map((u) => (
+                        <option key={u._id} value={u._id}>
+                          {u.name} ({getRoleLabel(u.role)})
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronDown 
+                    style={{ 
+                      position: 'absolute', 
+                      right: '14px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      pointerEvents: 'none', 
+                      color: '#64748b', 
+                      fontSize: '12px' 
+                  }} />
+                </div>
 
                 <label style={{ display: 'block', marginBottom: 6 }}>Date</label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className={styles.modalInput}
-                />
+                <div className={styles.datePickerWrapper}>
+                  <DatePicker
+                    selected={selectedDate ? parseISO(selectedDate) : null}
+                    onChange={(d) => setSelectedDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                    dateFormat="yyyy-MM-dd"
+                    customInput={<CustomDateInput />}
+                    showPopperArrow={false}
+                    fixedHeight
+                  />
+                </div>
 
                 <div className={styles.modalActions}>
                   <button
@@ -195,6 +234,7 @@ const today = formatDateLocal(new Date());
                         setSelectedDate('');
                         setRefreshKey((k) => k + 1);
                         dispatch(fetchApprovedRequests());
+                        if (typeof onSubmitted === 'function') onSubmitted();
                       } catch (err) {
                         alert(err.response?.data?.message || 'Failed to create request');
                       } finally {
