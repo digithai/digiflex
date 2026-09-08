@@ -1,25 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHolidays } from '../hooks/useHolidays';
 import { useWfhSettings } from '../hooks/useWfhSettings';
-import { getTargetWeek, getWeekLabel } from '../utils/dateUtils';
 import styles from '../styles/MainPage.module.css';
 import DonutChart from './DonutChart';
+import MonthlyWeeksProgressBar from './MonthlyWeeksProgressBar';
 import WfhHistoryDrawer from './WfhHistoryDrawer';
 
 export default function WfhBalance({ refreshKey }) {
   const { holidays } = useHolidays();
-  const { settings } = useWfhSettings();
+  useWfhSettings();
   const { token, user } = useSelector(state => state.auth);
   const userId = user._id || user.id;
   
-  const weeklyQuota = Number(user?.wfhWeekly) || 0;
   const totalQuota = Number(user?.wfhAnnualQuota) || 0;
   const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
-
-  // Use shared utility functions
-  const { start: weekStart, end: weekEnd } = getTargetWeek(settings);
-  const weekLabel = getWeekLabel(weekStart);
 
   // get weekly wfh used from API
   const [approvedWFH, setApprovedWFH] = useState([]);
@@ -62,64 +57,13 @@ export default function WfhBalance({ refreshKey }) {
     fetchWFHData();
   }, [token, refreshKey]);
 
-  // pre calculate normalized dates for filtering
-  const normalizedStart = new Date(weekStart);
-  normalizedStart.setHours(0, 0, 0, 0);
-  const normalizedEnd = new Date(weekEnd);
-  normalizedEnd.setHours(23, 59, 59, 999);
-
-  // filter approved wfh requests for current user in current week
-  const weeklyApproved = approvedWFH.filter(request => {
-    if (!request.user) return false;
-    const requestId = request.user._id || request.user.id; 
-    if (requestId !== userId) return false; // Filter by current user
-    
-    const reqDate = new Date(request.date);
-    const normalizedReqDate = new Date(reqDate);
-    normalizedReqDate.setHours(0, 0, 0, 0);
-
-    return (
-      normalizedReqDate >= normalizedStart && 
-      normalizedReqDate <= normalizedEnd && 
-      request.type === 'wfh' && 
-      request.status === 'approved'
-    );
-  }).length;
-
-  // filter pending wfh requests for current user in current week
-  const weeklyPending = pendingWFH.filter(request => {
-    if (!request.user) return false;
-    const requestId = request.user._id || request.user.id; 
-    if (requestId !== userId) return false; // Filter by current user
-    
-    const reqDate = new Date(request.date);
-    const normalizedReqDate = new Date(reqDate);
-    normalizedReqDate.setHours(0, 0, 0, 0);
-
-    return (
-      normalizedReqDate >= normalizedStart && 
-      normalizedReqDate <= normalizedEnd && 
-      request.type === 'wfh' && 
-      request.status === 'pending'
-    );
-  }).length;
-
-  const weeklyUsed = weeklyApproved + weeklyPending;
-
-  // calculate holidays in the current week
-  const holidaysInWeek = holidays.filter(h => {
-    const holidayDate = new Date(h.date);
-    holidayDate.setHours(0, 0, 0, 0);
-    return holidayDate >= new Date(weekStart) && holidayDate <= new Date(weekEnd);
-  }).length;
-  
-  const weeklyRemaining = Math.max(
-    0, 
-    Math.min(wfhAnnualBalance, weeklyQuota - weeklyUsed - holidaysInWeek)
-  );
-
-  // effective weekly total after capped with annual balance
-  const effectiveWeeklyTotal = weeklyUsed + weeklyRemaining;
+  const myRequests = useMemo(() => {
+    return [...approvedWFH, ...pendingWFH].filter((r) => {
+      if (!r || !r.user) return false;
+      const rid = r.user._id || r.user.id;
+      return rid === userId && String(r.type).toLowerCase() === 'wfh';
+    });
+  }, [approvedWFH, pendingWFH, userId]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -148,34 +92,17 @@ export default function WfhBalance({ refreshKey }) {
     <div className={styles.wfhBalance}>
       {/* WFH balance section */}
       <div className={styles.donutGrid}>
-        <DonutChart 
-          total={effectiveWeeklyTotal} 
-          remaining={weeklyRemaining} 
-          label={
-            <span>
-              Weekly Balance 
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px' }}>
-                ({weekLabel})
-              </span>
-            </span>
-          }
+        <MonthlyWeeksProgressBar
+          requests={myRequests}
+          currentDate={today}
+          user={user}
+          holidays={holidays}
         />
         <DonutChart 
           total={totalQuota} 
           remaining={wfhAnnualBalance} 
-          label={
-            <span>
-              Annual Balance 
-              <button
-                className={styles.viewHistoryButton}
-                onClick={() => setIsHistoryOpen(true)}
-              >
-                <span style={{ fontSize: '11px' }}>
-                  (View History)
-                </span>
-              </button>
-            </span>
-          }
+          label="Annual Balance"
+          onViewHistory={() => setIsHistoryOpen(true)}
         />
       </div>
 

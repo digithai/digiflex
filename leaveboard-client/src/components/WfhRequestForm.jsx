@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import SectionWrap from './SectionWrap';
 import styles from '../styles/WfhRequestForm.module.css';
-import { getWeekBounds } from '../utils/dateUtils';
+import { getWeekBounds, getWfhWeekBalance } from '../utils/dateUtils';
 import DatePicker from 'react-datepicker';
 import { format, addDays, startOfWeek, startOfMonth, endOfMonth, isSameDay, parseISO } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -36,7 +36,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const pendingUrl = `${import.meta.env.VITE_BASE_URL}/api/wfh/approvals`;
   const holidaysUrl = `${import.meta.env.VITE_BASE_URL}/api/holidays`;
   const settingsUrl = `${import.meta.env.VITE_BASE_URL}/api/settings/wfh`;
-  const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   // Fetch WFH settings so we can respect dynamic disallowed weekdays client-side
   useEffect(() => {
@@ -109,6 +108,27 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     };
 
   }, [activeScopes]);
+
+  // Pre-calculate weekly WFH balance for each week in the allowed range
+  const weekBalanceMap = useMemo(() => {
+    const map = new Map();
+    if (!user || !minStartDate || !minSunday) return map;
+
+    let current = startOfWeek(minStartDate, { weekStartsOn: 1 });
+    while (current <= minSunday) {
+      const { start, end } = getWeekBounds(current);
+      const balance = getWfhWeekBalance({
+        user,
+        requests: [...approved, ...pending],
+        holidays,
+        weekStart: start,
+        weekEnd: end,
+      });
+      map.set(start.getTime(), balance);
+      current = addDays(current, 7);
+    }
+    return map;
+  }, [user, minStartDate, minSunday, approved, pending, holidays]);
 
   // Auto-dismiss message after 5 seconds (after WFH request submit)
   useEffect(() => {
@@ -262,63 +282,27 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     }
   }, [type, user, date, approved, pending, holidays, disallowedWeekdays]);
 
-  // Calculate holiday adjustment for target week
+  // Calculate holiday adjustment for selected date's week (or target week if no date)
+  const currentWeek = useMemo(() => {
+    if (date) return getWeekBounds(date);
+    return targetWeek || null;
+  }, [date, targetWeek]);
+
   useEffect(() => {
-    if (targetWeek && user) {
-      const { start: weekStart, end: weekEnd } = targetWeek;
-      const holidaysInWeek = holidays.filter((h) => {
-        if (!h?.date) return false;
-        const hd = new Date(h.date);
-        return hd >= weekStart && hd <= weekEnd;
-      }).length;
-
-      const baseMaxDays = user.wfhWeekly || 1;
-      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek); // Adjust weekly max days based on holidays in week
-      const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
-      const annualCapDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
-      
-      // Calculate used days for target week
-      const userId = user._id || user.id;
-      const usedDays = [...approved, ...pending].filter((r) => {
-        if (!r || !r.user) return false;
-        const rid = r.user._id || r.user.id;
-        if (rid !== userId) return false;
-        const rd = new Date(r.date);
-        return rd >= weekStart && rd <= weekEnd && String(r.type).toLowerCase() === 'wfh';
-      }).length;
-      
-      const usableDays = Math.max(0, annualCapDays - usedDays);
-      const weekLabel = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
-
-      setHolidayAdjustmentData({ 
-        holidaysInWeek, 
-        weekLabel, 
-        baseMaxDays, 
-        effectiveMaxDays, 
-        annualCapDays, 
-        usableDays, 
-        wfhAnnualBalance, 
-        usedDays 
+    if (currentWeek && user) {
+      const { start: weekStart, end: weekEnd } = currentWeek;
+      const balance = getWfhWeekBalance({
+        user,
+        requests: [...approved, ...pending],
+        holidays,
+        weekStart,
+        weekEnd,
       });
+      setHolidayAdjustmentData(balance);
+    } else {
+      setHolidayAdjustmentData(null);
     }
-  }, [targetWeek, holidays, user, approved, pending]);
-
-  const countsForWeek = (() => {
-    if (!user || !date) return { approved: 0, pending: 0, all: 0 };
-    const { start, end } = getWeekBounds(date);
-    const userId = user._id || user.id;
-    const inWeekForUser = (r) => {
-      if (!r || !r.user) return false;
-      const rid = r.user._id || r.user.id;
-      if (rid !== userId) return false;
-      const rd = new Date(r.date);
-      return rd >= start && rd <= end && String(r.type).toLowerCase() === 'wfh';
-    };
-    const a = approved.filter(inWeekForUser).length;
-    const p = pending.filter(inWeekForUser).length;
-    return { approved: a, pending: p, all: a + p };
-  })();
-
+  }, [currentWeek, user, approved, pending, holidays]);
 
   // Calendar Date Evaluation & Policy Validation
   const evaluateDateStatus = (d) => {
@@ -432,6 +416,17 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         counts: { approved: samePosApproved.length, pending: samePosPending.length, max: maxAllowed }
       };
     }
+
+    const { start: weekStart } = getWeekBounds(d);
+    const weekBalance = weekBalanceMap.get(weekStart.getTime());
+    if (weekBalance && weekBalance.usableDays <= 0) {
+      return {
+        selectable: false,
+        type: 'weekly_limit',
+        label: 'Weekly quota used',
+      };
+    }
+
     return { selectable: true, type: 'eligible', label: 'Eligible for WFH' };
   };
 
@@ -439,13 +434,13 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
   const handleDateHover = useCallback((date) => {
     const status = evaluateDateStatus(date);
     setSelectedDateInfo({ date, status, detailed: true });
-  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user, weekBalanceMap]);
 
   const handleDateClick = useCallback((date) => {
     const status = evaluateDateStatus(date);
     setSelectedDateInfo({ date, status, detailed: true });
     setCalendarOpen(false);
-  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user, weekBalanceMap]);
 
   const clearDateInfo = useCallback(() => {
     setSelectedDateInfo(null);
@@ -552,7 +547,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     );
   };
 
-  const isDateSelectable = useCallback((d) => evaluateDateStatus(d).selectable, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  const isDateSelectable = useCallback((d) => evaluateDateStatus(d).selectable, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user, weekBalanceMap]);
 
   const getDayClassName = useCallback((d) => {
     const status = evaluateDateStatus(d);
@@ -561,9 +556,10 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     if (status.type === 'mon_fri_restricted') return 'wfh-day-monfri';
     if (status.type === 'max_position_quota') return 'wfh-day-max-position';
     if (status.type === 'team_pending_warning') return 'wfh-day-team-pending-warning';
+    if (status.type === 'weekly_limit') return 'wfh-day-weekly-limit';
     if (status.type === 'eligible') return 'wfh-day-eligible';
     return 'wfh-day-outside-scope';
-  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user, weekBalanceMap]);
 
   // Validation on date change
   useEffect(() => {
@@ -573,20 +569,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
       const isHoliday = holidays.some((h) => h?.date === date);
       if (isHoliday) {
-        setBlocked(true);
-        return;
-      }
-
-      const { start: weekStart, end: weekEnd } = getWeekBounds(date);
-      const holidaysInWeek = holidays.filter((h) => {
-        if (!h?.date) return false;
-        const hd = new Date(h.date);
-        return hd >= weekStart && hd <= weekEnd;
-      }).length;
-
-      const baseMaxDays = user.wfhWeekly || 1;
-      const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
-      if (effectiveMaxDays <= 0) {
         setBlocked(true);
         return;
       }
@@ -612,7 +594,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
       const hasApprovedSameDay = approved.some(sameDay);
       const hasPendingSameDay = pending.some(sameDay);
-      const limitBlocked = countsForWeek.all >= effectiveMaxDays;
+      const limitBlocked = (holidayAdjustmentData?.usableDays || 0) <= 0;
       const dateBlocked = hasApprovedSameDay || hasPendingSameDay;
 
       setBlocked(limitBlocked || dateBlocked);
@@ -629,7 +611,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     else {
       setBlocked(false);
     }
-  }, [type, user, date, approved, pending, holidays, disallowedWeekdays, countsForWeek]);
+  }, [type, user, date, approved, pending, holidays, disallowedWeekdays, holidayAdjustmentData]);
 
   // Custom day renderer for info panel integration
   const renderDayContents = useCallback((day, date) => {
@@ -638,6 +620,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
                       status.type === 'mon_fri_restricted' ? 'wfh-day-monfri' :
                       status.type === 'max_position_quota' ? 'wfh-day-max-position' :
                       status.type === 'team_pending_warning' ? 'wfh-day-team-pending-warning' :
+                      status.type === 'weekly_limit' ? 'wfh-day-weekly-limit' :
                       status.type === 'user_approved' ? 'wfh-day-user-approved' :
                       status.type === 'user_pending' ? 'wfh-day-user-pending' :
                       status.type === 'eligible' ? 'wfh-day-eligible' : 'wfh-day-outside-scope';
@@ -657,7 +640,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         {day}
       </div>
     );
-  }, [handleDateHover, handleDateClick, clearDateInfo, minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [handleDateHover, handleDateClick, clearDateInfo, minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user, weekBalanceMap]);
 
   const showAutoDismissMessage = (msg) => {
     setAutoDismissMessage(msg);
@@ -691,16 +674,16 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     if (type === 'wfh' && user && date) {
       const { start, end } = getWeekBounds(date);
       const userId = user._id || user.id;
-      const maxDays = user.wfhWeekly || 1;
-      const approvedAndPending = [...approved, ...pending].filter((r) => {
-        if (!r || !r.user) return false;
-        const rid = r.user._id || r.user.id;
-        if (rid !== userId) return false;
-        const rd = new Date(r.date);
-        return rd >= start && rd <= end && String(r.type).toLowerCase() === 'wfh';
-      }).length;
-      if (approvedAndPending >= maxDays) {
-        setMessage(`You have reached your weekly WFH limit (${maxDays}). Total this week: ${countsForWeek.all}.`);
+
+      const initialBalance = getWfhWeekBalance({
+        user,
+        requests: [...approved, ...pending],
+        holidays,
+        weekStart: start,
+        weekEnd: end,
+      });
+      if (initialBalance.usableDays <= 0) {
+        setMessage(`You have reached your weekly WFH limit (${initialBalance.effectiveMaxDays}). Total this week: ${initialBalance.usedDays}.`);
         setSubmitting(false);
         return;
       }
@@ -712,6 +695,20 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         ]);
         const latestApproved = approvedRes.data || [];
         const latestPending = pendingRes.data || [];
+
+        const latestBalance = getWfhWeekBalance({
+          user,
+          requests: [...latestApproved, ...latestPending],
+          holidays,
+          weekStart: start,
+          weekEnd: end,
+        });
+        if (latestBalance.usableDays <= 0) {
+          setMessage(`You have reached your weekly WFH limit (${latestBalance.effectiveMaxDays}). Total this week: ${latestBalance.usedDays}.`);
+          setSubmitting(false);
+          return;
+        }
+
         const sameDay = (r) => {
           if (!r || !r.user) return false;
           const rid = r.user._id || r.user.id;
@@ -780,7 +777,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       <span className={styles.datePickerLabel}>
         {date
           ? format(parseISO(date), 'EEE, d MMM yyyy')
-          : `Select WFH date for ${activeScopes.join(', ')}...`}
+          : `Select WFH date for ${activeScopes.join(', ')} ...`}
       </span>
       <span className={styles.datePickerIcon}><ChevronDown/></span>
     </button>
@@ -939,7 +936,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
           </button>
         ) : (
           <button type="button" disabled className={styles.submitButton}>
-            No Available Days
+            Select another date
           </button>
         )}
 
@@ -976,7 +973,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
                         There {holidaysInWeek === 1 ? 'is' : 'are'} {holidaysInWeek} public
                         holiday{holidaysInWeek === 1 ? '' : 's'} for the week
                         <span className={styles.holidayAway}>({weekLabel})</span>, automatically adjusting your
-                        WFH allowance from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'}.
+                        WFH balance from {baseMaxDays} to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : '(s)'}.
                         {usedDays > 0 && ` You have used ${usedDays} day${usedDays === 1 ? '' : '(s)'} (${usableDays} remaining).`}
                       </>
                     );

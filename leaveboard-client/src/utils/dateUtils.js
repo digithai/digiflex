@@ -6,7 +6,7 @@ export const getWeekBounds = (date) => {
   start.setDate(dt.getDate() + diffToMonday);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+  end.setDate(start.getDate() + 4); // Monday to Friday workweek
   end.setHours(23, 59, 59, 999);
   return { start, end };
 };
@@ -32,4 +32,51 @@ export const getTargetWeek = (settings) => {
     return getWeekBounds(nextWeek);
   }
   return getWeekBounds(new Date());
+};
+
+export const getWfhWeekBalance = ({ user, requests = [], holidays = [], weekStart, weekEnd }) => {
+  const baseMaxDays = Number(user?.wfhWeekly) || 1;
+  const wfhAnnualBalance = Number(user?.wfhAnnualBalance) || 0;
+  const userId = user?._id || user?.id;
+
+  const holidaysInWeek = (holidays || []).filter((h) => {
+    if (!h?.date) return false;
+    const hd = new Date(h.date);
+    return hd >= weekStart && hd <= weekEnd;
+  }).length;
+
+  const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
+  const annualCapDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
+
+  const approved = [];
+  const pending = [];
+  const usedDays = (requests || []).filter((r) => {
+    if (!r || !r.user) return false;
+    const rid = r.user._id || r.user.id;
+    if (rid !== userId) return false;
+    const rd = new Date(r.date);
+    if (rd < weekStart || rd > weekEnd) return false;
+    if (String(r.type).toLowerCase() !== 'wfh') return false;
+    const status = String(r.status).toLowerCase();
+    if (status === 'rejected') return false;
+    if (status === 'approved') approved.push(r);
+    else if (status === 'pending') pending.push(r);
+    return true;
+  }).length;
+
+  const usableDays = Math.max(0, annualCapDays - usedDays);
+
+  return {
+    baseMaxDays,
+    holidaysInWeek,
+    effectiveMaxDays,
+    annualCapDays,
+    wfhAnnualBalance,
+    usedDays,
+    approved: approved.length,
+    pending: pending.length,
+    all: usedDays,
+    usableDays,
+    weekLabel: `${formatDate(weekStart)} - ${formatDate(weekEnd)}`,
+  };
 };

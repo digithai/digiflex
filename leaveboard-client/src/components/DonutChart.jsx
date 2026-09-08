@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { History, ArrowRight } from 'lucide-react';
 import styles from '../styles/MainPage.module.css';
 
-const DonutChart = ({ total, remaining, label }) => {
+const DonutChart = ({ total, remaining, label, onViewHistory }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -68,6 +69,10 @@ const DonutChart = ({ total, remaining, label }) => {
 
   return (
     <div className={styles.donutWrapper}>
+      <div className={styles.donutHeader}>
+        <span className={styles.donutTitle}>{label}</span>
+        <span className={styles.donutTotalBadge}>{totalNum} days total</span>
+      </div>
       <div className={styles.donutChartContainer}>
         <canvas ref={chartRef} />
         <div className={styles.donutCenterText}>
@@ -77,8 +82,20 @@ const DonutChart = ({ total, remaining, label }) => {
           </div>
         </div>
       </div>
-      <div className={styles.donutLabel}>{label}</div>
-      <div className={styles.donutMeta}>{Math.min(used, totalNum)} / {totalNum} used</div>
+      <div className={styles.donutFooter}>
+        <span className={styles.donutMeta}>{Math.min(used, totalNum)} / {totalNum} used</span>
+        {onViewHistory && (
+          <button
+            type="button"
+            className={styles.donutViewButton}
+            onClick={onViewHistory}
+          >
+            <History className={styles.donutViewIcon} />
+            <span>View logs</span>
+            <ArrowRight className={styles.donutViewIcon} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
