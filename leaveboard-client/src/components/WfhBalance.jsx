@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHolidays } from '../hooks/useHolidays';
-import { useWfhSettings } from '../hooks/useWfhSettings';
 import styles from '../styles/MainPage.module.css';
 import DonutChart from './DonutChart';
 import MonthlyWeeksProgressBar from './MonthlyWeeksProgressBar';
@@ -9,7 +8,6 @@ import WfhHistoryDrawer from './WfhHistoryDrawer';
 
 export default function WfhBalance({ refreshKey }) {
   const { holidays } = useHolidays();
-  useWfhSettings();
   const { token, user } = useSelector(state => state.auth);
   const userId = user._id || user.id;
   

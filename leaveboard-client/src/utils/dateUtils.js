@@ -48,8 +48,6 @@ export const getWfhWeekBalance = ({ user, requests = [], holidays = [], weekStar
   const effectiveMaxDays = Math.max(0, baseMaxDays - holidaysInWeek);
   const annualCapDays = Math.min(effectiveMaxDays, wfhAnnualBalance);
 
-  const approved = [];
-  const pending = [];
   const usedDays = (requests || []).filter((r) => {
     if (!r || !r.user) return false;
     const rid = r.user._id || r.user.id;
@@ -59,8 +57,6 @@ export const getWfhWeekBalance = ({ user, requests = [], holidays = [], weekStar
     if (String(r.type).toLowerCase() !== 'wfh') return false;
     const status = String(r.status).toLowerCase();
     if (status === 'rejected') return false;
-    if (status === 'approved') approved.push(r);
-    else if (status === 'pending') pending.push(r);
     return true;
   }).length;
 
@@ -71,11 +67,7 @@ export const getWfhWeekBalance = ({ user, requests = [], holidays = [], weekStar
     holidaysInWeek,
     effectiveMaxDays,
     annualCapDays,
-    wfhAnnualBalance,
     usedDays,
-    approved: approved.length,
-    pending: pending.length,
-    all: usedDays,
     usableDays,
     weekLabel: `${formatDate(weekStart)} - ${formatDate(weekEnd)}`,
   };

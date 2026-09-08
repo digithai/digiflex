@@ -5,7 +5,7 @@ import SectionWrap from './SectionWrap';
 import styles from '../styles/WfhRequestForm.module.css';
 import { getWeekBounds, getWfhWeekBalance } from '../utils/dateUtils';
 import DatePicker from 'react-datepicker';
-import { format, addDays, startOfWeek, startOfMonth, endOfMonth, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, startOfWeek, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ChevronDown, CalendarDays } from 'lucide-react';
 
@@ -499,12 +499,8 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
           }
           return 'Team Limit Reached';
         }
-        case 'eligible': {
-          const hasNoDaysLeft = holidayAdjustmentData && holidayAdjustmentData.usableDays <= 0;
-          return hasNoDaysLeft
-            ? "Eligible date, but your WFH balance is 0"
-            : 'Available for WFH';
-        }
+        case 'eligible':
+          return 'Available for WFH';
         default: 
           return status.label || 'Unknown';
       }
@@ -683,7 +679,14 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         weekEnd: end,
       });
       if (initialBalance.usableDays <= 0) {
-        setMessage(`You have reached your weekly WFH limit (${initialBalance.effectiveMaxDays}). Total this week: ${initialBalance.usedDays}.`);
+        const { effectiveMaxDays, annualCapDays, usedDays } = initialBalance;
+        if (effectiveMaxDays <= 0) {
+          setMessage(`No WFH allowed this week due to public holidays.`);
+        } else if (annualCapDays < effectiveMaxDays) {
+          setMessage(`You have no remaining WFH days for this week due to your annual balance cap.`);
+        } else {
+          setMessage(`You have reached your weekly WFH limit (${effectiveMaxDays}). Total this week: ${usedDays}.`);
+        }
         setSubmitting(false);
         return;
       }
@@ -704,7 +707,14 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
           weekEnd: end,
         });
         if (latestBalance.usableDays <= 0) {
-          setMessage(`You have reached your weekly WFH limit (${latestBalance.effectiveMaxDays}). Total this week: ${latestBalance.usedDays}.`);
+          const { effectiveMaxDays, annualCapDays, usedDays, holidaysInWeek } = latestBalance;
+          if (effectiveMaxDays <= 0) {
+            setMessage(`No WFH allowed this week due to public holidays.`);
+          } else if (annualCapDays < effectiveMaxDays) {
+            setMessage(`You have no remaining WFH days for this week due to your annual balance cap.`);
+          } else {
+            setMessage(`You have reached your weekly WFH limit (${effectiveMaxDays}). Total this week: ${usedDays}.`);
+          }
           setSubmitting(false);
           return;
         }

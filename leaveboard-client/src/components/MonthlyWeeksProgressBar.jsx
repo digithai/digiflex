@@ -84,9 +84,6 @@ const MonthlyWeeksProgressBar = ({
     });
   }, [weeks, requests, current, user, holidays]);
 
-  const totalUsed = weekData.reduce((sum, w) => sum + w.used, 0);
-  const totalQuota = weekData.reduce((sum, w) => sum + w.effectiveQuota, 0);
-
   const currentMonthYear = format(current, 'MMMM yyyy');
 
   return (
