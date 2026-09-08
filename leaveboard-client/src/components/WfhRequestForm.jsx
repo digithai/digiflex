@@ -5,7 +5,7 @@ import SectionWrap from './SectionWrap';
 import styles from '../styles/WfhRequestForm.module.css';
 import { getWeekBounds } from '../utils/dateUtils';
 import DatePicker from 'react-datepicker';
-import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, startOfWeek, startOfMonth, endOfMonth, isSameDay, parseISO } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ChevronDown, CalendarDays } from 'lucide-react';
 
@@ -66,48 +66,49 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     if (token) fetchSettings();
   }, [settingsUrl, token]);
 
-  // const weekScope = tenantSettings?.wfhScope || 'next';
-  const weekScope = useMemo(() => {
-    if (!allowedDateScopes) return 'next'; // default
-    if (allowedDateScopes.thisWeek) return 'this';
-    if (allowedDateScopes.nextWeek) return 'next';
-    return 'next'; // default
+
+  const activeScopes = useMemo(() => {
+    if (!allowedDateScopes) return [];
+    const scopes = [];
+    if (allowedDateScopes.thisWeek) scopes.push('this');
+    if (allowedDateScopes.nextWeek) scopes.push('next');
+    if (allowedDateScopes.withinMonth) scopes.push('month');
+    return scopes.length > 0 ? scopes : ['next']; 
   }, [allowedDateScopes]);
 
-  // Calculate "Next Week" boundaries for WFH scope
-  const { nextWeekMonday, nextWeekFriday, nextWeekSunday } = useMemo(() => {
+  // Calculate minimum/maximum date for WFH request based on active scopes
+  const { minStartDate, minSunday } = useMemo(() => {
     const today = new Date();
-    const curMon = startOfWeek(today, { weekStartsOn: 1 });
+    const curMon = startOfWeek(today, {weekStartsOn: 1});
     const nextMon = addDays(curMon, 7);
-    return {
-      nextWeekMonday: nextMon,
-      nextWeekFriday: addDays(nextMon, 4),
-      nextWeekSunday: addDays(nextMon, 6),
-    };
-  }, []);
 
-  // Calulate minimum date for WFH request based on week scope
-  const { minStartDate, minFriday, minSunday } = useMemo(() => {
-    if (weekScope === 'this') {
-      const today = new Date();
-      const curMon = startOfWeek(today, { weekStartsOn: 1 });
-      return {
-        minStartDate: today,
-        minFriday: addDays(curMon, 4),
-        minSunday: addDays(curMon, 6),
-      };
+    let minDate = nextMon; // default to next Monday
+    let maxDate = addDays(nextMon, 6); // default to next Sunday
+
+    if (activeScopes.includes('this')){
+      minDate = today;
+      maxDate = addDays(curMon, 6);
     }
-    else{
-      const today = new Date();
-      const curMon = startOfWeek(today, { weekStartsOn: 1 });
-      const nextMon = addDays(curMon, 7);
-      return {
-        minStartDate: nextMon,
-        minFriday: addDays(nextMon, 4),
-        minSunday: addDays(nextMon, 6),
-      };
+
+    if (activeScopes.includes('next')) {
+      minDate = Math.min(minDate.getTime(), nextMon.getTime()) === minDate.getTime() ? minDate : nextMon;
+      maxDate = Math.max(maxDate.getTime(), addDays(nextMon, 6).getTime()) === maxDate.getTime() ? maxDate : addDays(nextMon, 6);
     }
-  }, [weekScope]);
+
+    if (activeScopes.includes('month')) {
+      const monthStartCandidate = startOfMonth(today);
+      const monthStart = monthStartCandidate > today ? monthStartCandidate : today;
+      const monthEnd = endOfMonth(today);
+      minDate = Math.min(minDate.getTime(), monthStart.getTime()) === minDate.getTime() ? minDate : monthStart;
+      maxDate = Math.max(maxDate.getTime(), monthEnd.getTime()) === maxDate.getTime() ? maxDate : monthEnd;
+    }
+
+    return {
+      minStartDate: minDate,
+      minSunday: maxDate,
+    };
+
+  }, [activeScopes]);
 
   // Auto-dismiss message after 5 seconds (after WFH request submit)
   useEffect(() => {
@@ -320,13 +321,15 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
 
   // Calendar Date Evaluation & Policy Validation
-  const evaluateDateStatus = (d, weekScope = 'next') => {
+  const evaluateDateStatus = (d) => {
     const dayOfWeek = d.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const todayTime = new Date().setHours(0, 0, 0, 0);
     const time = new Date(d).setHours(0, 0, 0, 0);
+    const minTime = new Date(minStartDate).setHours(0, 0, 0, 0);
+    const maxTime = new Date(minSunday).setHours(23, 59, 59, 999);
 
-    // Check if date is outside the allowed range
-    if (d === minStartDate) {
+    if (time === todayTime) {
       return {
         selectable: false,
         type: 'today',
@@ -334,30 +337,13 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       };
     }
 
-    if (d < minStartDate || d > minSunday) {
+    if (time < minTime || time > maxTime) {
       return {
         selectable: false,
         type: 'outside_range',
         label: 'Outside allowed date range',
       };
     }
-
-    // Calculate week boundaries based on scope (tenant's settings)
-    let weekStart, weekEnd;
-
-    if (weekScope === 'this'){
-      const today = new Date();
-      weekStart = startOfWeek(today, {weekStartsOn: 1});
-      weekEnd = addDays(weekStart, 6);
-    }
-    else{
-      weekStart = nextWeekMonday;
-      weekEnd = nextWeekSunday;
-    }
-
-    const monTime = new Date(weekStart).setHours(0, 0, 0, 0);
-    const sunTime = new Date(weekEnd).setHours(23, 59, 59, 999);
-    const inScope = time >= monTime && time <= sunTime;
 
     const dateKey = formatDateKey(d);
     const holiday = holidays.find((h) => h?.date === dateKey);
@@ -376,7 +362,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     const hasUserApproved = approved.some(sameDay);
     const hasUserPending = pending.some(sameDay);
 
-    const userPos = (user && user.team) || '';
+    const userPos = (user && user.position) || '';
     const maxAllowed = positionConcurrency[userPos] ?? 1;
     const samePosApproved = approved.filter((r) => {
       const rKey = r.date ? r.date.slice(0, 10) : '';
@@ -399,13 +385,6 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     const isMaxPendingReached = samePosPending.length >= maxAllowed;
     const totalWithPending = samePosApproved.length + samePosPending.length;
 
-    if (!inScope) {
-      return {
-        selectable: false,
-        type: 'outside_scope',
-        label: 'Outside Next Week',
-      };
-    }
     if (isWeekend) {
       return { selectable: false, type: 'weekend', label: 'Weekend' };
     }
@@ -458,15 +437,15 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
   // Handle date hover/click for info panel
   const handleDateHover = useCallback((date) => {
-    const status = evaluateDateStatus(date, weekScope);
+    const status = evaluateDateStatus(date);
     setSelectedDateInfo({ date, status, detailed: true });
-  }, [weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
   const handleDateClick = useCallback((date) => {
-    const status = evaluateDateStatus(date, weekScope);
+    const status = evaluateDateStatus(date);
     setSelectedDateInfo({ date, status, detailed: true });
     setCalendarOpen(false);
-  }, [weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
   const clearDateInfo = useCallback(() => {
     setSelectedDateInfo(null);
@@ -573,10 +552,10 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     );
   };
 
-  const isDateSelectable = useCallback((d) => evaluateDateStatus(d, weekScope).selectable, [weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  const isDateSelectable = useCallback((d) => evaluateDateStatus(d).selectable, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
   const getDayClassName = useCallback((d) => {
-    const status = evaluateDateStatus(d, weekScope);
+    const status = evaluateDateStatus(d);
 
     if (status.type === 'holiday') return 'wfh-day-holiday';
     if (status.type === 'mon_fri_restricted') return 'wfh-day-monfri';
@@ -584,7 +563,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
     if (status.type === 'team_pending_warning') return 'wfh-day-team-pending-warning';
     if (status.type === 'eligible') return 'wfh-day-eligible';
     return 'wfh-day-outside-scope';
-  }, [weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
   // Validation on date change
   useEffect(() => {
@@ -654,7 +633,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
 
   // Custom day renderer for info panel integration
   const renderDayContents = useCallback((day, date) => {
-    const status = evaluateDateStatus(date, weekScope);
+    const status = evaluateDateStatus(date);
     const className = status.type === 'holiday' ? 'wfh-day-holiday' :
                       status.type === 'mon_fri_restricted' ? 'wfh-day-monfri' :
                       status.type === 'max_position_quota' ? 'wfh-day-max-position' :
@@ -678,7 +657,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
         {day}
       </div>
     );
-  }, [handleDateHover, handleDateClick, clearDateInfo, weekScope, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
+  }, [handleDateHover, handleDateClick, clearDateInfo, minStartDate, minSunday, approved, pending, holidays, disallowedWeekdays, positionConcurrency, user]);
 
   const showAutoDismissMessage = (msg) => {
     setAutoDismissMessage(msg);
@@ -801,7 +780,7 @@ const WfhRequestForm = ({ onSubmitted, targetWeek }) => {
       <span className={styles.datePickerLabel}>
         {date
           ? format(parseISO(date), 'EEE, d MMM yyyy')
-          : `Select WFH date for ${weekScope} week...`}
+          : `Select WFH date for ${activeScopes.join(', ')}...`}
       </span>
       <span className={styles.datePickerIcon}><ChevronDown/></span>
     </button>
